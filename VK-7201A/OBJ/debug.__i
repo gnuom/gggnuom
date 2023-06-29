@@ -1,0 +1,1 @@
+"..\USER\driver\debug.c" OMF2 OPTIMIZE (8,SPEED) BROWSE INCDIR(..\CORE;..\FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\debug.lst) TABS (2) OBJECT(..\OBJ\debug.obj)

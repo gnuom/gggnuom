@@ -1,0 +1,24 @@
+
+#ifndef __H_EEPROM_
+#define __H_EEPROM_
+///////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef	__EXT_EEPROM_
+#define	EEPROM_EXT
+#else
+#define EEPROM_EXT		extern
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+#define	cnMemoryDataLen			50
+
+#define	cnIAPHoldTime			0xF0
+#define	cnIAPMemoryBaseAddr		0xFE00
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+EEPROM_EXT void Memory_Init(void);
+EEPROM_EXT void Memory_Write(uint16_t sector_addr, uint8_t *pdataIn, uint8_t len);
+EEPROM_EXT void Memory_Read(uint16_t sector_addr, uint8_t *pdataOut, uint8_t len);
+
+
+#endif

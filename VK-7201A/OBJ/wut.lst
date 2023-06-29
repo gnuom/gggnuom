@@ -1,0 +1,189 @@
+C51 COMPILER V9.59.0.0   WUT                                                               06/27/2023 19:17:32 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE WUT
+OBJECT MODULE PLACED IN ..\OBJ\wut.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\FWLib\src\wut.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..\FWLib
+                    -\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\wut.lst) TABS(2) OBJ
+                    -ECT(..\OBJ\wut.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * Copyright (C) 2019 China Micro Semiconductor Limited Company. All Rights Reserved.
+   3          *
+   4          * This software is owned and published by:
+   5          * CMS LLC, No 2609-10, Taurus Plaza, TaoyuanRoad, NanshanDistrict, Shenzhen, China.
+   6          *
+   7          * BY DOWNLOADING, INSTALLING OR USING THIS SOFTWARE, YOU AGREE TO BE BOUND
+   8          * BY ALL THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+   9          *
+  10          * This software contains source code for use with CMS
+  11          * components. This software is licensed by CMS to be adapted only
+  12          * for use in systems utilizing CMS components. CMS shall not be
+  13          * responsible for misuse or illegal use of this software for devices not
+  14          * supported herein. CMS is providing this software "AS IS" and will
+  15          * not be responsible for issues arising from incorrect user implementation
+  16          * of the software.
+  17          *
+  18          * This software may be replicated in part or whole for the licensed use,
+  19          * with the restriction that this Disclaimer and Copyright notice must be
+  20          * included with each copy of this software, whether used in part or whole,
+  21          * at all times.
+  22          */
+  23          
+  24          /****************************************************************************/
+  25          /** \file wut.c
+  26          **
+  27          **  
+  28          **
+  29          **  History:
+  30          **  
+  31          *****************************************************************************/
+  32          /****************************************************************************/
+  33          /*  include files
+  34          *****************************************************************************/
+  35          #include "wut.h"
+  36          
+  37          /****************************************************************************/
+  38          /*  Local pre-processor symbols/macros('#define')
+  39          ****************************************************************************/
+  40          
+  41          /****************************************************************************/
+  42          /*  Global variable definitions(declared in header file with 'extern')
+  43          ****************************************************************************/
+  44          
+  45          
+  46          /****************************************************************************/
+  47          /*  Local type definitions('typedef')
+  48          ****************************************************************************/
+  49          
+  50          /****************************************************************************/
+  51          /*  Local variable  definitions('static')
+  52          ****************************************************************************/
+  53          
+C51 COMPILER V9.59.0.0   WUT                                                               06/27/2023 19:17:32 PAGE 2   
+
+  54          /****************************************************************************/
+  55          /*  Local function prototypes('static')
+  56          ****************************************************************************/
+  57          
+  58          /****************************************************************************/
+  59          /*  Function implementation - global ('extern') and local('static')
+  60          ****************************************************************************/
+  61          
+  62          /*****************************************************************************
+  63           ** \brief   WUT_EnableWUTWakeUp
+  64           **      使能WUT定时唤醒功能
+  65           ** \param [in] none
+  66           **
+  67           ** \return none
+  68           ** \note   
+  69           *****************************************************************************/
+  70          void WUT_EnableWUTWakeUp(void)
+  71          {
+  72   1        WUTCRH |= (WUT_WUTCRH_WUTEN_Msk);
+  73   1      
+  74   1      }
+  75          /*****************************************************************************
+  76           ** \brief   WUT_DisableWUTWakeUp
+  77           **      关闭定时唤醒功能
+  78           ** \param [in] none
+  79           **
+  80           ** \return none
+  81           ** \note   
+  82           *****************************************************************************/
+  83          void WUT_DisableWUTWakeUp(void)
+  84          {
+  85   1        WUTCRH &= ~(WUT_WUTCRH_WUTEN_Msk);
+  86   1      }
+  87          
+  88          /*****************************************************************************
+  89           ** \brief   WUT_ConfigCLK
+  90           **     设置定时唤醒时钟
+  91           ** \param [in] clkdiv: (1)WUT_CLK_DIV_1 
+  92           **           (2)WUT_CLK_DIV_8
+  93           **           (2)WUT_CLK_DIV_32
+  94          **            (2)WUT_CLK_DIV_256
+  95           ** \return none
+  96           ** \note   
+  97           *****************************************************************************/
+  98          void WUT_ConfigCLK(uint8_t clkdiv)
+  99          {
+ 100   1        uint8_t temp;
+ 101   1        temp = WUTCRH;  
+ 102   1        temp &= ~(WUT_WUTCRH_WUTPS_Msk);
+ 103   1        temp |= (clkdiv<<WUT_WUTCRH_WUTPS_Pos);
+ 104   1        WUTCRH = temp;
+ 105   1      }
+ 106          
+ 107          /*****************************************************************************
+ 108           ** \brief   WUT_ConfigTime
+ 109           **     设置定时唤醒时间
+ 110           ** \param [in] time: 12it（0x0 ~ 0xFFF）
+ 111           ** \return none
+ 112           ** \note   
+ 113           *****************************************************************************/
+ 114          void WUT_ConfigTime(uint16_t time )
+ 115          {
+C51 COMPILER V9.59.0.0   WUT                                                               06/27/2023 19:17:32 PAGE 3   
+
+ 116   1        uint8_t temp;
+ 117   1        temp = WUTCRH;  
+ 118   1        temp &= ~(WUT_WUTCRH_WUTD_Msk);
+ 119   1        temp |= time>>8;
+ 120   1        WUTCRH = temp;
+ 121   1        WUTCRL = time;
+ 122   1      }
+ 123          
+ 124          /*****************************************************************************
+ 125           ** \brief   WUT_GetOverflowFlag
+ 126           **      获取WUT定时器计数溢出标志
+ 127           ** \param [in] none
+ 128           ** \return   0：无溢出   1：溢出
+ 129           ** \note
+ 130           *****************************************************************************/
+ 131          uint8_t WUT_GetOverflowFlag(void)
+ 132          {
+ 133   1        return((WUTCRH & WUT_WUTCRH_TMROV_Msk)? 1:0);
+ 134   1      }
+ 135          /*****************************************************************************
+ 136           ** \brief   WUT_ClearOverflowFlag
+ 137           **      清除WUT定时器计数溢出标志
+ 138           ** \param [in] none
+ 139           ** \return   none
+ 140           ** \note
+ 141           *****************************************************************************/
+ 142          void WUT_ClearOverflowFlag(void)
+ 143          {
+ 144   1        WUTCRH &= ~(WUT_WUTCRH_TMROV_Msk);  
+ 145   1      }
+ 146          
+ 147          
+ 148          
+ 149          
+ 150          
+ 151          
+ 152          
+ 153          
+ 154          
+ 155          
+ 156          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     53    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

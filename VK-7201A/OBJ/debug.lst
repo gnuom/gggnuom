@@ -1,0 +1,309 @@
+C51 COMPILER V9.59.0.0   DEBUG                                                             06/27/2023 19:17:33 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DEBUG
+OBJECT MODULE PLACED IN ..\OBJ\debug.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\USER\driver\debug.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..\F
+                    -WLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\debug.lst) TABS(
+                    -2) OBJECT(..\OBJ\debug.obj)
+
+line level    source
+
+   1          
+   2          #define __EXT_DEBUG_
+   3          #include "Globals.h"
+   4          
+   5          ///////////////////////////////////////////////////////////////////////////////////////////////////
+   6          #ifdef cnDebug_Print
+   7          
+   8          ///////////////////////////////////////////////////////////////////////////////////////////////////
+   9          static uint8_t RAM_iDATA RxStep, RxLevelCnt, RxBuf, RxBitNum, RxBufTmp;
+  10          static uint8_t RAM_iDATA TxStep, TxLevelCnt, TxBuf, TxBitNum;
+  11          static bool_t bGotoSending;
+  12          static void TMR4_Config(void)
+  13          {
+  14   1        RxStep = cnRxStep_WaitStartH;
+  15   1        RxLevelCnt = 0;
+  16   1        RxBuf = 0;
+  17   1        RxBufTmp = 0;
+  18   1        RxBitNum = 0;
+  19   1      
+  20   1        bGotoSending = FALSE;
+  21   1        TxStep = cnTxStep_WaitStart;
+  22   1        TxLevelCnt = 0;
+  23   1        TxBuf = 0;
+  24   1        TxBitNum = 0;
+  25   1      
+  26   1        // (1)设置Timer的运行模式
+  27   1        TMR_ConfigRunMode(TMR4, TMR_MODE_TIMING, TMR_TIM_AUTO_8BIT);  
+  28   1        // (2)设置Timer 运行时钟
+  29   1        TMR_ConfigTimerClk(TMR4, TMR_CLK_DIV_12);         // Fsys = 24Mhz，Ftimer = 2Mhz,Ttmr=0.5us
+  30   1        // (3)设置Timer周期
+  31   1        TMR_ConfigTimerPeriod(TMR4, 256-208, 256-208);        // 200*0.5us = 100us,递增计数
+  32   1          
+  33   1        // (4)开启中断
+  34   1        TMR_EnableOverflowInt(TMR4);
+  35   1      
+  36   1        // (5)设置Timer中断优先级
+  37   1        IRQ_SET_PRIORITY(IRQ_TMR4, IRQ_PRIORITY_HIGH);
+  38   1      
+  39   1        // (6)开启Timer
+  40   1        TMR_Start(TMR4);
+  41   1      }
+  42          
+  43          
+  44          // ____    __    __    __    __    ____   
+  45          //     |  |  |  |  |  |  |  |  |  |   
+  46          //     |0 |1 |2 |3 |4 |5 |6 |7 |8 |9   
+  47          //     |__|  |__|  |__|  |__|  |__|   
+  48          //               
+  49          static void Timer4_IRQHandler(void)      interrupt TMR4_VECTOR 
+  50          {
+  51   1        //P_TX = ~P_TX;
+  52   1        //return;
+  53   1      
+C51 COMPILER V9.59.0.0   DEBUG                                                             06/27/2023 19:17:33 PAGE 2   
+
+  54   1        // TX
+  55   1        if(bGotoSending == FALSE)
+  56   1        {
+  57   2          P_TX = 1;
+  58   2          TxStep = cnTxStep_WaitStart;
+  59   2          TxLevelCnt = 0;
+  60   2        }
+  61   1        else
+  62   1        {
+  63   2          ++TxLevelCnt;
+  64   2          if(TxStep == cnTxStep_WaitStart)
+  65   2          {
+  66   3            P_TX = 1;
+  67   3            if(TxLevelCnt >=2)
+  68   3            {
+  69   4              TxLevelCnt = 0;
+  70   4              TxStep = cnTxStep_SendStartBit;
+  71   4            }
+  72   3          }
+  73   2          else if(TxStep == cnTxStep_SendStartBit)
+  74   2          {
+  75   3            P_TX = 0;
+  76   3            if(TxLevelCnt >= 4)
+  77   3            {
+  78   4              TxLevelCnt = 0;
+  79   4              TxBitNum = 0;
+  80   4              TxStep = cnTxStep_SendBit;
+  81   4            }
+  82   3          }
+  83   2          else if(TxStep == cnTxStep_SendBit)
+  84   2          {
+  85   3            P_TX = TxBuf & 0x01;
+  86   3            if(TxLevelCnt >= 4)
+  87   3            {
+  88   4              TxLevelCnt = 0;
+  89   4      
+  90   4              ++TxBitNum;
+  91   4              if(TxBitNum >= 8)
+  92   4                TxStep = cnTxStep_SendEndBit;
+  93   4              else
+  94   4                TxBuf >>= 1;
+  95   4            }
+  96   3          }
+  97   2          else
+  98   2          {
+  99   3            P_TX = 1;
+ 100   3            if(TxLevelCnt >= 4)
+ 101   3            {
+ 102   4              TxStep = cnTxStep_WaitStart;
+ 103   4              TxLevelCnt = 0;
+ 104   4              bGotoSending = FALSE;
+ 105   4            } 
+ 106   3          }
+ 107   2        }
+ 108   1        
+ 109   1      /*
+ 110   1        // RX
+ 111   1        if(RxStep == cnRxStep_WaitStartH)
+ 112   1        {
+ 113   1          if(P_RX)
+ 114   1          {
+ 115   1            RxLevelCnt = 0;
+C51 COMPILER V9.59.0.0   DEBUG                                                             06/27/2023 19:17:33 PAGE 3   
+
+ 116   1            RxStep = cnRxStep_WaitStartBit;
+ 117   1          }
+ 118   1        }
+ 119   1        else if(RxStep == cnRxStep_WaitStartBit)
+ 120   1        {
+ 121   1          if(P_RX)
+ 122   1            RxLevelCnt = 0;
+ 123   1          else
+ 124   1          {
+ 125   1            if((++RxLevelCnt) >= 2)
+ 126   1            {
+ 127   1              RxLevelCnt = 0;
+ 128   1              RxBuf = 0;
+ 129   1              RxBitNum = 0;
+ 130   1              RxStep = cnRxStep_GetBit;
+ 131   1            }
+ 132   1          }
+ 133   1        }
+ 134   1        else if(RxStep == cnRxStep_GetBit)
+ 135   1        {
+ 136   1          if((++RxLevelCnt) >= 4)
+ 137   1          {
+ 138   1            RxLevelCnt = 0;
+ 139   1            if(P_RX)
+ 140   1              RxBuf |= 0x80;
+ 141   1        
+ 142   1            ++RxBitNum;
+ 143   1            if(RxBitNum >= 8)
+ 144   1              RxStep = cnRxStep_WaitEndBit;
+ 145   1            else
+ 146   1              RxBuf >>= 1;
+ 147   1          }
+ 148   1        }
+ 149   1        else //if(RxStep == cnRxStep_WaitEndBit)
+ 150   1        {
+ 151   1          RxBitNum = 0;
+ 152   1        
+ 153   1          if((++RxLevelCnt) >= 4)
+ 154   1          {
+ 155   1            RxLevelCnt = 0;
+ 156   1        
+ 157   1            if(P_RX)
+ 158   1            {
+ 159   1              RxBufTmp = RxBuf;
+ 160   1            }
+ 161   1        
+ 162   1            RxStep = cnRxStep_WaitStartH;
+ 163   1          }
+ 164   1        }
+ 165   1      */  
+ 166   1      }
+ 167          
+ 168          
+ 169          ///////////////////////////////////////////////////////////////////////////////////////////////////
+ 170          void GpioUart_Init(void)
+ 171          {
+ 172   1        SetTXPortDirOut();
+ 173   1        SetRXPortDirIn();
+ 174   1      
+ 175   1        TMR4_Config();
+ 176   1      }
+ 177          
+C51 COMPILER V9.59.0.0   DEBUG                                                             06/27/2023 19:17:33 PAGE 4   
+
+ 178          void GpioUart_Send(uint8_t dat)
+ 179          {
+ 180   1        while(bGotoSending)
+ 181   1        {
+ 182   2          ClearWDT();
+ 183   2        }
+ 184   1      
+ 185   1        TxBuf = dat;
+ 186   1        bGotoSending = TRUE;
+ 187   1      }
+ 188          
+ 189          uint8_t GpioUart_Recv(void)
+ 190          {
+ 191   1        return RxBufTmp;
+ 192   1      }
+ 193          
+ 194          
+ 195          ///////////////////////////////////////////////////////////////////////////////////////////////////
+ 196          uint16_t RAM_DATA debugTmr, debugLowCnt;
+ 197          
+ 198          void Debug_Init(void)
+ 199          {
+ 200   1        GpioUart_Init();
+ 201   1      
+ 202   1        debugTmr = 0; 
+ 203   1        debugLowCnt = 0;
+ 204   1      }
+ 205          
+ 206          void SetDebugTimerCnt(uint16_t cnt)
+ 207          {
+ 208   1        cnt = cnt;
+ 209   1      /*
+ 210   1        if(debugTmr > 0)
+ 211   1          return;
+ 212   1      
+ 213   1        debugLowCnt = cnt;
+ 214   1        debugTmr = 100;     // 500ms
+ 215   1      */  
+ 216   1      }
+ 217          
+ 218          void Debug_Run_Task(void)
+ 219          {
+ 220   1      
+ 221   1        if(debugTmr == 0)
+ 222   1        {
+ 223   2          //if(IsCurWorkModeWorking())
+ 224   2          //  debugTmr = 0.2 * (1000UL / cnTBaseT_100ms);
+ 225   2          //else if(IsCurWorkModeEmergency())   
+ 226   2          //  debugTmr = 0.5 * (1000UL / cnTBaseT_100ms);
+ 227   2          //else
+ 228   2            debugTmr = 1 * (1000UL / cnTBaseT_100ms);
+ 229   2          
+ 230   2      
+ 231   2          #if 1
+ 232   2          //debug_print(0x00);
+ 233   2          debug_print(GetCurWorkMode());
+ 234   2          #endif
+ 235   2      
+ 236   2          //debug_print(0x03);
+ 237   2          debug_print(Working.status);
+ 238   2      
+ 239   2          //debug_print(0x04);
+C51 COMPILER V9.59.0.0   DEBUG                                                             06/27/2023 19:17:33 PAGE 5   
+
+ 240   2          debug_print(IsHeaterOn());
+ 241   2          //debug_print(Working.tempDo);
+ 242   2          debug_print(GetTempNTC());
+ 243   2      
+ 244   2          //debug_print(0x06);
+ 245   2          //debug_print((uint8_t)KeyFlag);
+ 246   2        }
+ 247   1        else  
+ 248   1          --debugTmr;
+ 249   1      }
+ 250          
+ 251          #else
+              void Debug_Init(void)
+              {
+              }
+              
+              void SetDebugTimerCnt(uint16_t cnt)
+              {
+                cnt = cnt;
+              }
+              
+              void GpioUart_Send(uint8_t dat)
+              {
+                dat = dat;
+              }
+              
+              void Debug_Run_Task(void)
+              {
+              }
+              
+              #endif
+ 271          
+ 272          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    368    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4       3
+   IDATA SIZE       =      9    ----
+   BIT SIZE         =      1    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

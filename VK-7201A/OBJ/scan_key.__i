@@ -1,0 +1,1 @@
+"..\USER\driver\scan_key.c" OMF2 OPTIMIZE (8,SPEED) BROWSE INCDIR(..\CORE;..\FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\scan_key.lst) TABS (2) OBJECT(..\OBJ\scan_key.obj)

@@ -1,0 +1,23 @@
+
+#define	__EXT_HEATER_
+#include "Globals.h"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+bool_t bHeaterOn;
+
+void Heater_Init(void)
+{
+	SetPortHeaterAsOut();
+	TurnOffHeater();
+}
+
+void Heater_Run_Task(void)
+{
+	if(bHeaterOn)
+		Heater_On();
+	else
+		Heater_Off();
+}
+
+
+

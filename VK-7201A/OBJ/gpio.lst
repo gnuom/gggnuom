@@ -1,0 +1,211 @@
+C51 COMPILER V9.59.0.0   GPIO                                                              06/27/2023 19:17:31 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE GPIO
+OBJECT MODULE PLACED IN ..\OBJ\gpio.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\FWLib\src\gpio.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..\FWLi
+                    -b\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\gpio.lst) TABS(2) O
+                    -BJECT(..\OBJ\gpio.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * Copyright (C) 2019 China Micro Semiconductor Limited Company. All Rights Reserved.
+   3          *
+   4          * This software is owned and published by:
+   5          * CMS LLC, No 2609-10, Taurus Plaza, TaoyuanRoad, NanshanDistrict, Shenzhen, China.
+   6          *
+   7          * BY DOWNLOADING, INSTALLING OR USING THIS SOFTWARE, YOU AGREE TO BE BOUND
+   8          * BY ALL THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+   9          *
+  10          * This software contains source code for use with CMS
+  11          * components. This software is licensed by CMS to be adapted only
+  12          * for use in systems utilizing CMS components. CMS shall not be
+  13          * responsible for misuse or illegal use of this software for devices not
+  14          * supported herein. CMS is providing this software "AS IS" and will
+  15          * not be responsible for issues arising from incorrect user implementation
+  16          * of the software.
+  17          *
+  18          * This software may be replicated in part or whole for the licensed use,
+  19          * with the restriction that this Disclaimer and Copyright notice must be
+  20          * included with each copy of this software, whether used in part or whole,
+  21          * at all times.
+  22          */
+  23          
+  24          /****************************************************************************/
+  25          /** \file gpio.c
+  26          **
+  27          ** 
+  28          **
+  29          **  History:
+  30          **  
+  31          *****************************************************************************/
+  32          /****************************************************************************/
+  33          /*  include files
+  34          *****************************************************************************/
+  35          #include "gpio.h"
+  36          
+  37          /****************************************************************************/
+  38          /*  Local pre-processor symbols/macros('#define')
+  39          ****************************************************************************/
+  40          
+  41          /****************************************************************************/
+  42          /*  Global variable definitions(declared in header file with 'extern')
+  43          ****************************************************************************/
+  44          
+  45          /****************************************************************************/
+  46          /*  Local type definitions('typedef')
+  47          ****************************************************************************/
+  48          
+  49          /****************************************************************************/
+  50          /*  Local variable  definitions('static')
+  51          ****************************************************************************/
+  52          
+  53          /****************************************************************************/
+C51 COMPILER V9.59.0.0   GPIO                                                              06/27/2023 19:17:31 PAGE 2   
+
+  54          /*  Local function prototypes('static')
+  55          ****************************************************************************/
+  56          
+  57          /****************************************************************************/
+  58          /*  Function implementation - global ('extern') and local('static')
+  59          ****************************************************************************/
+  60          
+  61           /********************************************************************************
+  62           ** \brief   GPIO_EnableInt
+  63           **      使能IO口的中断功能
+  64           ** \param [in] Port  ： GPIO0、GPIO1、GPIO2、GPIO5
+  65           **         PinMSK: GPIO_PIN_0_MSK ~ GPIO_PIN_7_MSK      
+  66           ** \return  none
+  67           ** \note   
+  68           ******************************************************************************/
+  69          void GPIO_EnableInt(uint8_t Port, uint8_t PinMSK)
+  70          {
+  71   1        switch(Port)
+  72   1        {
+  73   2          case GPIO0:
+  74   2            P0EXTIE |= PinMSK;
+  75   2            break;
+  76   2          case GPIO1:
+  77   2            P1EXTIE |= PinMSK;
+  78   2            break;    
+  79   2          case GPIO2:
+  80   2            P2EXTIE |= PinMSK;
+  81   2            break;      
+  82   2          case GPIO5:
+  83   2            P5EXTIE |= PinMSK;
+  84   2            break;    
+  85   2          default:
+  86   2            break;  
+  87   2        }
+  88   1      }
+  89          /********************************************************************************
+  90           ** \brief   GPIO_DisableInt
+  91           **      关闭IO口的中断功能
+  92           ** \param [in] Port  ： GPIO0、GPIO1、GPIO2、GPIO5
+  93           **         PinMSK: GPIO_PIN_0_MSK ~ GPIO_PIN_7_MSK      
+  94           ** \return  none
+  95           ** \note   
+  96           ******************************************************************************/
+  97          void GPIO_DisableInt(uint8_t Port, uint8_t PinMSK)
+  98          {
+  99   1        switch(Port)
+ 100   1        {
+ 101   2          case GPIO0:
+ 102   2            P0EXTIE &= ~PinMSK;
+ 103   2            break;
+ 104   2          case GPIO1:
+ 105   2            P1EXTIE &= ~PinMSK;
+ 106   2            break;    
+ 107   2          case GPIO2:
+ 108   2            P2EXTIE &= ~PinMSK;
+ 109   2            break;  
+ 110   2          case GPIO5:
+ 111   2            P5EXTIE &= ~PinMSK;
+ 112   2            break;    
+ 113   2          default:
+ 114   2            break;  
+ 115   2        }
+C51 COMPILER V9.59.0.0   GPIO                                                              06/27/2023 19:17:31 PAGE 3   
+
+ 116   1      }
+ 117          
+ 118           /******************************************************************************
+ 119           ** \brief   GPIO_GetIntFlag
+ 120           **      获取中断标志
+ 121           ** \param [in] Port  ： GPIO0、GPIO1、GPIO2、GPIO5
+ 122           **         PinNum:  GPIO_PIN_0~GPIO_PIN_7     
+ 123           ** \return  0：无中断产生
+ 124           **      1：有中断产生
+ 125           ** \note  
+ 126           ******************************************************************************/
+ 127          uint8_t  GPIO_GetIntFlag(uint8_t Port, uint8_t PinNum)
+ 128          {
+ 129   1        uint8_t PinIntFlag = 0;
+ 130   1        switch(Port)
+ 131   1        {
+ 132   2          case GPIO0:
+ 133   2            PinIntFlag = P0EXTIF & (1<<PinNum);
+ 134   2            break;
+ 135   2          case GPIO1:
+ 136   2            PinIntFlag = P1EXTIF & (1<<PinNum);
+ 137   2            break;    
+ 138   2          case GPIO2:
+ 139   2            PinIntFlag = P2EXTIF & (1<<PinNum);
+ 140   2            break;          
+ 141   2          case GPIO5:
+ 142   2            PinIntFlag = P5EXTIF & (1<<PinNum);
+ 143   2            break;        
+ 144   2          default:
+ 145   2            break;  
+ 146   2        }
+ 147   1        return( (PinIntFlag)? 1:0);
+ 148   1      }
+ 149           /********************************************************************************
+ 150           ** \brief   GPIO_ClearIntFlag
+ 151           **     清除中断标志位
+ 152           ** \param [in] Port  ： GPIO0、GPIO1、GPIO2、GPIO5
+ 153           **         PinNum:  GPIO_PIN_0~GPIO_PIN_7     
+ 154           ** \return  none
+ 155           ** \note  
+ 156           ******************************************************************************/
+ 157          void GPIO_ClearIntFlag(uint8_t Port, uint8_t PinNum)
+ 158          {
+ 159   1        switch(Port)
+ 160   1        {
+ 161   2          case GPIO0:
+ 162   2            P0EXTIF = 0xff &(~(1<<PinNum));
+ 163   2            break;
+ 164   2          case GPIO1:
+ 165   2            P1EXTIF = 0xff &(~(1<<PinNum));
+ 166   2            break;    
+ 167   2          case GPIO2:
+ 168   2            P2EXTIF = 0xff &(~(1<<PinNum));
+ 169   2            break;      
+ 170   2          case GPIO5:
+ 171   2            P5EXTIF = 0xff &(~(1<<PinNum));
+ 172   2            break;      
+ 173   2          default:
+ 174   2            break;  
+ 175   2        }
+ 176   1      }
+
+C51 COMPILER V9.59.0.0   GPIO                                                              06/27/2023 19:17:31 PAGE 4   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    232    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

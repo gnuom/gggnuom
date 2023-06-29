@@ -1,0 +1,109 @@
+C51 COMPILER V9.59.0.0   REL_PROTOCOL                                                      06/27/2023 19:17:32 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE REL_PROTOCOL
+OBJECT MODULE PLACED IN ..\OBJ\REL_Protocol.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\TOUCHLib\REL_Protocol.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;
+                    -..\FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\REL_Protocol
+                    -.lst) TABS(2) OBJECT(..\OBJ\REL_Protocol.obj)
+
+line level    source
+
+   1          #include "REL_Protocol.h"
+   2          
+   3          #define REL_TYPE_ID_USE 0x02
+   4          
+   5          typedef struct _PackStrcut
+   6          {
+   7            u16 rawData;//滤波值
+   8            u16 thresholdA;//阈值1
+   9            //u16 thresholdB;//阈值1
+  10            u16 noiseData;//噪声值
+  11          }PackStrcut;
+  12          
+  13          
+  14          #define PACK_SEND_COUNT_ONCE  4
+  15          
+  16          #if (C_KEY_TOTAL % PACK_SEND_COUNT_ONCE)
+  17            #define PACK_IDX_MAX      (C_KEY_TOTAL / PACK_SEND_COUNT_ONCE)
+  18            #define PACK_SEND_COUNT_FINAL (C_KEY_TOTAL % PACK_SEND_COUNT_ONCE)
+  19          #else
+                #define PACK_IDX_MAX      ((C_KEY_TOTAL-1) / PACK_SEND_COUNT_ONCE)
+                #define PACK_SEND_COUNT_FINAL PACK_SEND_COUNT_ONCE
+              #endif
+  23          
+  24          void REL_SenderLoop0()
+  25          {
+  26   1        //static u8 bSend = 0;
+  27   1        static u8 curIdx = 0;
+  28   1        static u8 packIdx = 0;
+  29   1        u8 thisSendCount; 
+  30   1        PackHeader packHeader;
+  31   1        PackStrcut packStrcut;
+  32   1        
+  33   1        //bSend = ~bSend;
+  34   1        //if(bSend == 0) return;
+  35   1        
+  36   1        // 填写头部数据
+  37   1        packHeader.typeId = REL_TYPE_ID_USE;
+  38   1        packHeader.packIdxMax = PACK_IDX_MAX;
+  39   1        packHeader.packIdxCur = packIdx;
+  40   1        
+  41   1        if(packIdx == PACK_IDX_MAX)
+  42   1        {
+  43   2          thisSendCount = PACK_SEND_COUNT_FINAL;
+  44   2          packHeader.length = sizeof(packHeader) + sizeof(packStrcut) * PACK_SEND_COUNT_FINAL + 1;
+  45   2        }
+  46   1        else
+  47   1        {
+  48   2          thisSendCount = PACK_SEND_COUNT_ONCE;
+  49   2          packHeader.length = sizeof(packHeader) + sizeof(packStrcut) * PACK_SEND_COUNT_ONCE + 1;
+  50   2        }
+  51   1        
+  52   1        // 开始发送
+  53   1        REL_SendStart(packHeader);
+C51 COMPILER V9.59.0.0   REL_PROTOCOL                                                      06/27/2023 19:17:32 PAGE 2   
+
+  54   2        do
+  55   2        {
+  56   3          #ifdef  CMS_TOUCH_DEBUG//调试宏定义是否为1
+                    packStrcut.rawData = htol16(g_FactorRawDat[curIdx]);        
+                    packStrcut.thresholdA = htol16(g_Disp_KeyDown[curIdx]);
+                    //packStrcut.thresholdB = htol16(g_Disp_KeyDown_Pro[curIdx]);
+                    packStrcut.noiseData = htol16(g_NoiseDat[curIdx]);
+                  #endif
+  62   3          REL_SendNext(packStrcut); 
+  63   3          thisSendCount--;
+  64   3          curIdx++;   
+  65   3        }while(thisSendCount != 0);
+  66   2        REL_SendEnd();  
+  67   1        
+  68   1        // 是否最后一包
+  69   1        if(packIdx == PACK_IDX_MAX)
+  70   1        {
+  71   2          packIdx = 0;
+  72   2          curIdx = 0;
+  73   2        }
+  74   1        else
+  75   1        {
+  76   2          packIdx++;
+  77   2        }
+  78   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    155    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2      14
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

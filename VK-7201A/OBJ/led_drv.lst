@@ -1,0 +1,241 @@
+C51 COMPILER V9.59.0.0   LED_DRV                                                           06/27/2023 19:17:33 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED_DRV
+OBJECT MODULE PLACED IN ..\OBJ\led_drv.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\USER\driver\led_drv.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..
+                    -\FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\led_drv.lst) T
+                    -ABS(2) OBJECT(..\OBJ\led_drv.obj)
+
+line level    source
+
+   1          
+   2          #define __EXT_LED_
+   3          #include "Globals.h"
+   4          
+   5          ///////////////////////////////////////////////////////////////////////////////////////////////////
+   6          void Update_Led_Show(void)
+   7          {
+   8   1      }
+   9          
+  10          
+  11          ///////////////////////////////////////////////////////////////////////////////////////////////////
+  12          static bool_t bLedBreathDir;
+  13          uint16_t LedBreathDuty;
+  14          
+  15          void Led_Init(void)
+  16          {
+  17   1        
+  18   1        //设置EPWM运行模式:
+  19   1        // 独立模式+输出独立模式+对称计数模式+向下计数(边沿对齐)模式
+  20   1        PWM_ConfigRunMode(PWM_WFG_INDEPENDENT | PWM_OC_INDEPENDENT);
+  21   1        //设置EPWM运行时钟  
+  22   1        PWM_ConfigChannelClk(cnLedCom_EPWM, PWM_CLK_DIV_32);
+  23   1      
+  24   1        //设置EPWM 周期以及占空比 
+  25   1        PWM_ConfigChannelPeriod(cnLedCom_EPWM, cnLedComPWMPeriodNum);
+  26   1        PWM_ConfigChannelDuty(cnLedCom_EPWM, 0);
+  27   1      
+  28   1        //设置EPWM的加载方式为自动加载
+  29   1        PWM_EnableAutoLoadMode(cnLedCom_chnEPWM_MSK);
+  30   1        //设置EPWM的输出极性
+  31   1        PWM_DisableReverseOutput(cnLedCom_chnEPWM_MSK); //关闭反向输出
+  32   1        //设置EPWM输出
+  33   1        PWM_EnableOutput(cnLedCom_chnEPWM_MSK);   //开启输出
+  34   1        //设置EPWM死区
+  35   1        PWM_DisableDeadZone(cnLedCom_EPWM);
+  36   1        
+  37   1        //设置EPWM输出IO复用
+  38   1        GPIO_SET_MUX_MODE(cnLedCom_PortCFG, cnLedCom_PortMUX);
+  39   1      
+  40   1        //开启EPWM          
+  41   1        PWM_Start(cnLedCom_chnEPWM_MSK);
+  42   1      
+  43   1      
+  44   1        bLedBreathDir = TRUE;
+  45   1        SetPortAllLedAsOut();
+  46   1        TurnOffAllLed();
+  47   1      }
+  48          
+  49          LedPara_t RAM_xDATA ledPara[cnLed_Max];
+  50          void SetLedStatus(Led_T led, LedStatus_T sta)
+  51          {
+  52   1        if(ledPara[led].status == sta)
+  53   1          return;
+C51 COMPILER V9.59.0.0   LED_DRV                                                           06/27/2023 19:17:33 PAGE 2   
+
+  54   1        if((ledPara[led].status == cnLedStatus_Flash_2times) && (ledPara[led].flashCnt != 0))
+  55   1          return;
+  56   1      
+  57   1        ledPara[led].statusTmp = ledPara[led].status;
+  58   1        ledPara[led].status = sta;
+  59   1        ledPara[led].OnOff = cnLedOff;
+  60   1        ledPara[led].flashCnt = 0;
+  61   1      
+  62   1        if(sta == cnLedStatus_Flash_100ms)
+  63   1          ledPara[led].runTmrTmp = cnLedRunT_0s2;
+  64   1        else if(sta == cnLedStatus_Flash_300ms)
+  65   1          ledPara[led].runTmrTmp = cnLedRunT_0s5;
+  66   1        else if(sta == cnLedStatus_Flash_2times)
+  67   1        {
+  68   2          ledPara[led].flashCnt = 2;
+  69   2          ledPara[led].runTmrTmp = cnLedRunT_0s2;
+  70   2        } 
+  71   1        else
+  72   1          ledPara[led].runTmrTmp = cnLedRunT_1s;
+  73   1      
+  74   1        ledPara[led].runTmr = ledPara[led].runTmrTmp;
+  75   1      }
+  76          
+  77          static void TurnLedOnOff(Led_T led, uint8_t onoroff)
+  78          {
+  79   1        switch(led)
+  80   1        {
+  81   2        case cnLedPower:
+  82   2          {
+  83   3            if(onoroff == cnLedOn)      LedPower_On();
+  84   3            else              LedPower_Off();
+  85   3          }
+  86   2          break;
+  87   2        case cnLedCookedAll:    // 全熟
+  88   2          {
+  89   3            if(onoroff == cnLedOn)      LedCookedAll_On();
+  90   3            else              LedCookedAll_Off();
+  91   3          }
+  92   2          break;
+  93   2        case cnLedCookedMed:    // 半熟
+  94   2          {
+  95   3            if(onoroff == cnLedOn)      LedCookedMed_On();
+  96   3            else              LedCookedMed_Off();
+  97   3          }
+  98   2          break;
+  99   2        case cnLedCookedHot:    // 温泉蛋
+ 100   2          {
+ 101   3            if(onoroff == cnLedOn)      LedCookedHot_On();
+ 102   3            else              LedCookedHot_Off();
+ 103   3          }
+ 104   2          break;
+ 105   2        case cnLedSteam:      // 蒸
+ 106   2          {
+ 107   3            if(onoroff == cnLedOn)      LedSteam_On();
+ 108   3            else              LedSteam_Off();
+ 109   3          }
+ 110   2          break;
+ 111   2        case cnLedCooking:      // 蒸煮
+ 112   2          {
+ 113   3            if(onoroff == cnLedOn)      LedCooking_On();
+ 114   3            else              LedCooking_Off();
+ 115   3          }
+C51 COMPILER V9.59.0.0   LED_DRV                                                           06/27/2023 19:17:33 PAGE 3   
+
+ 116   2          break;
+ 117   2        }
+ 118   1      }
+ 119          
+ 120          void LedShow_Run_Task(void)
+ 121          {
+ 122   1        uint8_t i;
+ 123   1      
+ 124   1        for(i=0; i<cnLed_Max; i++)
+ 125   1        {
+ 126   2          switch(ledPara[i].status)
+ 127   2          {
+ 128   3          case cnLedStatus_On:
+ 129   3            {
+ 130   4              TurnLedOnOff(i, cnLedOn);
+ 131   4              if((i>cnLed_Start) && (i<cnLed_Max))
+ 132   4                LedCom_On();
+ 133   4            } 
+ 134   3            break;
+ 135   3            
+ 136   3          case cnLedStatus_Flash_500ms:
+ 137   3          case cnLedStatus_Flash_300ms:
+ 138   3          case cnLedStatus_Flash_100ms:
+ 139   3          case cnLedStatus_Flash_2times:
+ 140   3            {
+ 141   4              if((++ledPara[i].runTmr) >= ledPara[i].runTmrTmp)
+ 142   4              {
+ 143   5                ledPara[i].runTmr = 0;
+ 144   5                if(ledPara[i].OnOff == cnLedOn)
+ 145   5                {
+ 146   6                  ledPara[i].OnOff = cnLedOff;
+ 147   6      
+ 148   6                  if(ledPara[i].status == cnLedStatus_Flash_2times)
+ 149   6                  {
+ 150   7                    if((--ledPara[i].flashCnt) == 0)
+ 151   7                      SetLedStatus(i, ledPara[i].statusTmp);            
+ 152   7                  }
+ 153   6                } 
+ 154   5                else
+ 155   5                  ledPara[i].OnOff = cnLedOn;
+ 156   5              }
+ 157   4      
+ 158   4              if(ledPara[i].OnOff == cnLedOn)
+ 159   4              {
+ 160   5                TurnLedOnOff(i, cnLedOn);
+ 161   5              } 
+ 162   4              else
+ 163   4              {
+ 164   5                TurnLedOnOff(i, cnLedOff);
+ 165   5              } 
+ 166   4      
+ 167   4              if((i>cnLed_Start) && (i<cnLed_Max))
+ 168   4                LedCom_On();
+ 169   4            }
+ 170   3            break;
+ 171   3            
+ 172   3          case cnLedStatus_Breath:
+ 173   3            {
+ 174   4              if(bLedBreathDir)
+ 175   4              {
+ 176   5                LedBreathDuty += cnLedComPWMDutyStep;
+ 177   5                if(LedBreathDuty > (cnLedComPWMDutyMax-100))
+C51 COMPILER V9.59.0.0   LED_DRV                                                           06/27/2023 19:17:33 PAGE 4   
+
+ 178   5                {
+ 179   6                  bLedBreathDir = FALSE;
+ 180   6                  //LedBreathDuty = cnLedComPWMDutyMax-100;
+ 181   6                } 
+ 182   5              }
+ 183   4              else
+ 184   4              {
+ 185   5                if(LedBreathDuty <= cnLedComPWMDutyStep)
+ 186   5                  bLedBreathDir = TRUE;
+ 187   5                else
+ 188   5                  LedBreathDuty -= cnLedComPWMDutyStep;
+ 189   5              }
+ 190   4              
+ 191   4              SetLedComPWM_Duty(LedBreathDuty);
+ 192   4              TurnLedOnOff(i, cnLedOn);
+ 193   4            }
+ 194   3            break;
+ 195   3      
+ 196   3          //case cnLedStatus_Off:
+ 197   3          default:
+ 198   3            TurnLedOnOff(i, cnLedOff);
+ 199   3            break;
+ 200   3          }
+ 201   2        }
+ 202   1      
+ 203   1        Update_Led_Show();
+ 204   1      }
+ 205          
+ 206          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    936    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     36    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

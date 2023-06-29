@@ -1,0 +1,278 @@
+C51 COMPILER V9.59.0.0   SPI                                                               06/27/2023 19:17:32 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE SPI
+OBJECT MODULE PLACED IN ..\OBJ\spi.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\FWLib\src\spi.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..\FWLib
+                    -\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\spi.lst) TABS(2) OBJ
+                    -ECT(..\OBJ\spi.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * Copyright (C) 2019 China Micro Semiconductor Limited Company. All Rights Reserved.
+   3          *
+   4          * This software is owned and published by:
+   5          * CMS LLC, No 2609-10, Taurus Plaza, TaoyuanRoad, NanshanDistrict, Shenzhen, China.
+   6          *
+   7          * BY DOWNLOADING, INSTALLING OR USING THIS SOFTWARE, YOU AGREE TO BE BOUND
+   8          * BY ALL THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+   9          *
+  10          * This software contains source code for use with CMS
+  11          * components. This software is licensed by CMS to be adapted only
+  12          * for use in systems utilizing CMS components. CMS shall not be
+  13          * responsible for misuse or illegal use of this software for devices not
+  14          * supported herein. CMS is providing this software "AS IS" and will
+  15          * not be responsible for issues arising from incorrect user implementation
+  16          * of the software.
+  17          *
+  18          * This software may be replicated in part or whole for the licensed use,
+  19          * with the restriction that this Disclaimer and Copyright notice must be
+  20          * included with each copy of this software, whether used in part or whole,
+  21          * at all times.
+  22          */
+  23          
+  24          /****************************************************************************/
+  25          /** \file spi.c
+  26          **
+  27          ** 
+  28          **
+  29          **  History:
+  30          **  
+  31          *****************************************************************************/
+  32          /****************************************************************************/
+  33          /*  include files
+  34          *****************************************************************************/
+  35          #include "spi.h"
+  36          
+  37          /****************************************************************************/
+  38          /*  Local pre-processor symbols/macros('#define')
+  39          *****************************************************************************/
+  40          
+  41          /****************************************************************************/
+  42          /*  Global variable definitions(declared in header file with 'extern')
+  43          *****************************************************************************/
+  44          
+  45          /****************************************************************************/
+  46          /*  Local type definitions('typedef')
+  47          *****************************************************************************/
+  48          
+  49          /****************************************************************************/
+  50          /*  Local variable  definitions('static')
+  51          *****************************************************************************/
+  52          
+  53          /****************************************************************************/
+C51 COMPILER V9.59.0.0   SPI                                                               06/27/2023 19:17:32 PAGE 2   
+
+  54          /*  Local function prototypes('static')
+  55          *****************************************************************************/
+  56          
+  57          /****************************************************************************/
+  58          /*  Function implementation - global ('extern') and local('static')
+  59          *****************************************************************************/
+  60          /*****************************************************************************
+  61           ** \brief  SPI_Start
+  62           **     开启SPI模块
+  63           ** \param [in] none
+  64           ** \return  none
+  65           ** \note  
+  66          *****************************************************************************/
+  67          void SPI_Start(void)
+  68          {
+  69   1        SPCR |= SPI_SPCR_SPEN_Msk;
+  70   1      }
+  71          /*****************************************************************************
+  72           ** \brief  SPI_Stop
+  73           **     关闭SPI模块
+  74           ** \param [in] none
+  75           ** \return  none
+  76           ** \note  
+  77          *****************************************************************************/
+  78          void SPI_Stop(void)
+  79          {
+  80   1        SPCR &= ~(SPI_SPCR_SPEN_Msk);
+  81   1      }
+  82          /*****************************************************************************
+  83           ** \brief  SPI_ConfigClk
+  84           **     配置SPI运行时钟
+  85           ** \param [in] SPIClkDiv： (1)SPI_CLK_DIV_4 ~ SPI_CLK_DIV_512
+  86           ** \return  none
+  87           ** \note  Fspi = Fsys / SPIClkDiv;
+  88          *****************************************************************************/
+  89          void SPI_ConfigClk(uint8_t SPIClkDiv)
+  90          {
+  91   1        SPCR &= ~(SPI_SPCR_SPR2_Msk | SPI_SPCR_SPRn_Msk);
+  92   1        SPCR |= SPIClkDiv;
+  93   1      }
+  94          /*****************************************************************************
+  95           ** \brief  SPI_ConfigRunMode
+  96           **     配置SPI运行模式
+  97           ** \param [in] ClkPositive: 时钟极性
+  98           **              (1)SPI_CLK_CPOL_LOW      ：SPI时钟空闲时为低
+  99           **              (2)SPI_CLK_CPOL_HIGH   ：SPI时钟空闲时为高
+ 100           **       ClkPhash: 时钟相位
+ 101           **               (1)SPI_CLK_CPHA_0 SPI先发数据再发时钟，即在时钟偶数沿采样
+ 102           **               (2)SPI_CLK_CPHA_1:SPI先发时钟再发数据，即在时钟奇数沿采样
+ 103           **       NSSMode: NSS脚控制选择(只用于主控模式)
+ 104           **               (1)SPI_NSS_SSCR_CONTROL:NSSx一直输出寄存器SSCR的内容
+ 105           **               (2)SPI_NSS_AUTO_CONTROL:SPI空闲时NSSx输出高电平，SPI传输时输出SSCR的内容
+ 106           ** \return  none
+ 107           ** \note 
+ 108          *****************************************************************************/
+ 109          void SPI_ConfigRunMode(uint8_t ClkPositive, uint8_t ClkPhash, uint8_t NSSMode)
+ 110          {
+ 111   1        SPCR &= ~(SPI_SPCR_CPOL_Msk | SPI_SPCR_CPHA_Msk);
+ 112   1        SPSR &= ~(SPI_SPSR_SSCEN_Msk);
+ 113   1        SPCR |= (ClkPositive | ClkPhash);
+ 114   1        SPSR |= NSSMode;  
+ 115   1      }
+C51 COMPILER V9.59.0.0   SPI                                                               06/27/2023 19:17:32 PAGE 3   
+
+ 116          
+ 117          /*****************************************************************************
+ 118           ** \brief  SPI_EnableMasterMode
+ 119           **     使能主控模式
+ 120           ** \param [in] none
+ 121           ** \return  none
+ 122           ** \note  
+ 123          *****************************************************************************/
+ 124          void SPI_EnableMasterMode(void)
+ 125          {
+ 126   1        SPCR |= (SPI_SPCR_MSTR_Msk);
+ 127   1      }
+ 128          /*****************************************************************************
+ 129           ** \brief  SPI_DisableMasterMode
+ 130           **     关闭主控模式
+ 131           ** \param [in] none
+ 132           ** \return  none
+ 133           ** \note  
+ 134          *****************************************************************************/
+ 135          void SPI_DisableMasterMode(void)
+ 136          {
+ 137   1        SPCR &= ~(SPI_SPCR_MSTR_Msk);
+ 138   1      }
+ 139          /*****************************************************************************
+ 140           ** \brief  SPI_EnableSlaveMode
+ 141           **     使能从机模式
+ 142           ** \param [in] none
+ 143           ** \return  none
+ 144           ** \note  
+ 145          *****************************************************************************/
+ 146          void SPI_EnableSlaveMode(void)
+ 147          {
+ 148   1        SPCR &= ~(SPI_SPCR_MSTR_Msk);
+ 149   1      
+ 150   1      }
+ 151          /*****************************************************************************
+ 152           ** \brief  SPI_DisableSlaveMode
+ 153           **     关闭从机模式
+ 154           ** \param [in] none
+ 155           ** \return  none
+ 156           ** \note  
+ 157          *****************************************************************************/
+ 158          void SPI_DisableSlaveMode(void)
+ 159          {
+ 160   1        SPCR |= (SPI_SPCR_MSTR_Msk);  
+ 161   1      }
+ 162          
+ 163          
+ 164          /*****************************************************************************
+ 165           ** \brief  SPI_GetTransferIntFlag
+ 166           **     获取传输完毕中断标志位
+ 167           ** \param [in] none
+ 168           ** \return  1:SPI传输完毕  0:SPI未传输完毕
+ 169           ** \note  
+ 170          *****************************************************************************/
+ 171          uint8_t SPI_GetTransferIntFlag(void)
+ 172          
+ 173          {
+ 174   1        return ((SPSR & SPI_SPSR_SPISIF_Msk)? 1:0);
+ 175   1      }
+ 176          /*****************************************************************************
+ 177           ** \brief  SPI_ClearTransferIntFlag
+C51 COMPILER V9.59.0.0   SPI                                                               06/27/2023 19:17:32 PAGE 4   
+
+ 178           **     清除传输完毕中断标志位
+ 179           ** \param [in] none
+ 180           ** \return  note
+ 181           ** \note  
+ 182          *****************************************************************************/
+ 183          void SPI_ClearTransferIntFlag(void)
+ 184          {
+ 185   1        uint8_t temp;
+ 186   1        temp = SPSR;
+ 187   1        temp = SPDR;
+ 188   1      }
+ 189          /*****************************************************************************
+ 190           ** \brief  SPI_GetWriteErrorIntFlag
+ 191           **     获取写冲突中断标志位
+ 192           ** \param [in] none
+ 193           ** \return  1:SPI发生写冲突  0:SPI无写冲突
+ 194           ** \note  
+ 195          *****************************************************************************/
+ 196          uint8_t SPI_GetWriteErrorIntFlag(void)
+ 197          {
+ 198   1        return ((SPSR & SPI_SPSR_WCOL_Msk)? 1:0); 
+ 199   1      }
+ 200          /*****************************************************************************
+ 201           ** \brief  SPI_ClearWriteErrorIntFlag
+ 202           **     清除写冲突中断标志位
+ 203           ** \param [in] none
+ 204           ** \return none
+ 205           ** \note  
+ 206          *****************************************************************************/
+ 207          void SPI_ClearWriteErrorIntFlag(void)
+ 208          {
+ 209   1        uint8_t temp;
+ 210   1        temp = SPSR;
+ 211   1        temp = SPDR;
+ 212   1      }
+ 213          /*****************************************************************************
+ 214           ** \brief  SPI_EnableIntFlag
+ 215           **     开启SPI中断
+ 216           ** \param [in] none
+ 217           ** \return  none
+ 218           ** \note  
+ 219          *****************************************************************************/
+ 220          void SPI_EnableIntFlag(void)
+ 221          {
+ 222   1        EIE2 |= IRQ_EIE2_SPIIE_Msk;
+ 223   1      }
+ 224          /*****************************************************************************
+ 225           ** \brief  SPI_DisableIntFlag
+ 226           **     关闭SPI中断
+ 227           ** \param [in] none
+ 228           ** \return  none
+ 229           ** \note  
+ 230          *****************************************************************************/
+ 231          void SPI_DisableIntFlag(void)
+ 232          {
+ 233   1        EIE2 &= ~(IRQ_EIE2_SPIIE_Msk);  
+ 234   1      }
+ 235          
+ 236          
+ 237          
+ 238          
+ 239          
+C51 COMPILER V9.59.0.0   SPI                                                               06/27/2023 19:17:32 PAGE 5   
+
+ 240          
+ 241          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     83    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

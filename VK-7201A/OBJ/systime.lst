@@ -1,0 +1,153 @@
+C51 COMPILER V9.59.0.0   SYSTIME                                                           06/27/2023 19:17:33 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE SYSTIME
+OBJECT MODULE PLACED IN ..\OBJ\systime.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\SYSTEM\systime.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..\FWLi
+                    -b\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\systime.lst) TABS(2
+                    -) OBJECT(..\OBJ\systime.obj)
+
+line level    source
+
+   1          
+   2          #define __EXT_TIME_
+   3          #include "Globals.h"
+   4          
+   5          ///////////////////////////////////////////////////////////////////////////////////////////////////
+   6          bool_t bTime1ms;
+   7          bool_t bTime5ms;
+   8          bool_t bTime10ms;
+   9          bool_t bTime100ms;
+  10          bool_t bTime200ms;
+  11          bool_t bTime500ms;
+  12          bool_t bTime1s;
+  13          
+  14          
+  15          uint32_t RAM_DATA sysTotalTick;
+  16          
+  17          static volatile uint8_t u8Time5ms;
+  18          static volatile uint8_t u8Time10ms;
+  19          static volatile uint8_t u8Time100ms;
+  20          static volatile uint8_t u8Time200ms;
+  21          static volatile uint8_t u8Time500ms;
+  22          static volatile uint8_t u8Time1s;
+  23          
+  24          #define cnSysTickT      (65536UL - 2000)  //Fsys = 24Mhz，Ftimer = 2Mhz,Ttmr=0.5us
+  25          
+  26          ///////////////////////////////////////////////////////////////////////////////////////////////////
+  27          void SysTime_Config(void)
+  28          {
+  29   1        bTime1ms = 0;
+  30   1        bTime5ms = 0;
+  31   1        bTime10ms = 0;
+  32   1        bTime100ms = 0;
+  33   1        bTime200ms = 0;
+  34   1        bTime500ms = 0;
+  35   1        bTime1s = 0;
+  36   1      
+  37   1        u8Time5ms = 0;
+  38   1        u8Time10ms = 0;
+  39   1        u8Time100ms = 0;
+  40   1        u8Time200ms = 0;
+  41   1        u8Time500ms = 0;
+  42   1        u8Time1s = 0;
+  43   1      
+  44   1        sysTotalTick = 0;
+  45   1        
+  46   1        //设置Timer的运行模式 1
+  47   1        TMR_ConfigRunMode(TMR0, TMR_MODE_TIMING, TMR_TIM_16BIT);  
+  48   1        //设置Timer 运行时钟: Fsys = 24Mhz，Ftimer = 2Mhz,Ttmr=0.5us
+  49   1        TMR_ConfigTimerClk(TMR0, TMR_CLK_DIV_12);           
+  50   1        //设置Timer周期:2000*0.5us = 1000us,递增计数
+  51   1        TMR_ConfigTimerPeriod(TMR0, (uint8_t)(cnSysTickT >> 8), (uint8_t)(cnSysTickT & 0x00ff));
+  52   1        //开启中断
+  53   1        TMR_EnableOverflowInt(TMR0);
+C51 COMPILER V9.59.0.0   SYSTIME                                                           06/27/2023 19:17:33 PAGE 2   
+
+  54   1        //设置Timer中断优先级
+  55   1        IRQ_SET_PRIORITY(IRQ_TMR0, IRQ_PRIORITY_HIGH);
+  56   1        //开启Timer
+  57   1        TMR_Start(TMR0);
+  58   1      }
+  59          
+  60          
+  61          /******************************************************************************
+  62           ** \brief   Timer 0 interrupt service function
+  63           **
+  64           ** \param [in]  none   
+  65           **
+  66           ** \return none
+  67          ******************************************************************************/
+  68          void Timer0_IRQHandler(void) interrupt TMR0_VECTOR 
+  69          {
+  70   1        TH0 = (uint8_t)(cnSysTickT >> 8);
+  71   1        TL0 = (uint8_t)(cnSysTickT & 0x00ff);
+  72   1      
+  73   1        ++sysTotalTick;   // 自上电后就开始累积，单位为1ms
+  74   1      
+  75   1        //pBuzzer_Power = ~pBuzzer_Power;
+  76   1          
+  77   1        bTime1ms = TRUE;
+  78   1        u8Time5ms++;
+  79   1        if(u8Time5ms >= 5)
+  80   1        {
+  81   2          u8Time5ms = 0;
+  82   2          bTime5ms = TRUE;
+  83   2        }
+  84   1      
+  85   1        u8Time10ms++;
+  86   1        if(u8Time10ms >= 10)
+  87   1        {
+  88   2          u8Time10ms = 0;
+  89   2          bTime10ms = TRUE;
+  90   2      
+  91   2          u8Time100ms++;
+  92   2          if(u8Time100ms >= 10)
+  93   2          {
+  94   3            u8Time100ms = 0;
+  95   3            bTime100ms = TRUE;
+  96   3      
+  97   3            u8Time200ms++;
+  98   3            if(u8Time200ms >= 2)
+  99   3            {
+ 100   4              u8Time200ms = 0;
+ 101   4              bTime200ms = TRUE;
+ 102   4            }
+ 103   3      
+ 104   3            u8Time500ms++;
+ 105   3            if(u8Time500ms >= 5)
+ 106   3            {
+ 107   4              u8Time500ms = 0;
+ 108   4              bTime500ms = TRUE;
+ 109   4            }
+ 110   3      
+ 111   3            u8Time1s++;
+ 112   3            if(u8Time1s >= 10)
+ 113   3            {
+ 114   4              u8Time1s = 0;
+ 115   4              bTime1s = TRUE;
+C51 COMPILER V9.59.0.0   SYSTIME                                                           06/27/2023 19:17:33 PAGE 3   
+
+ 116   4            }
+ 117   3          }
+ 118   2        }
+ 119   1      }
+ 120          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    233    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      7    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

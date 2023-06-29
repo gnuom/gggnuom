@@ -1,0 +1,180 @@
+C51 COMPILER V9.59.0.0   SCAN_KEY                                                          06/27/2023 19:17:33 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE SCAN_KEY
+OBJECT MODULE PLACED IN ..\OBJ\scan_key.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\USER\driver\scan_key.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;.
+                    -.\FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\scan_key.lst)
+                    - TABS(2) OBJECT(..\OBJ\scan_key.obj)
+
+line level    source
+
+   1          
+   2          #define __EXT_SCANKEY_
+   3          #include "Globals.h"
+   4          
+   5          ///////////////////////////////////////////////////////////////////////////////////////////////////
+   6          void Key_Init(void)
+   7          {
+   8   1        // 默认复用触摸口，可以不设置复用
+   9   1        GPIO_SET_MUX_MODE(P00CFG, GPIO_MUX_TKKEY); //复用成触摸口TK18 -> TK00  
+  10   1        GPIO_ENABLE_OUTPUT(P2TRIS, GPIO_PIN_2); 
+  11   1        
+  12   1        GPIO_SET_MUX_MODE(P01CFG, GPIO_MUX_TKKEY); //复用成触摸口TK19 -> TK01
+  13   1        GPIO_ENABLE_OUTPUT(P2TRIS, GPIO_PIN_3); 
+  14   1      }
+  15          
+  16          //按键是否放开，1s内的短按键，放开才动作。1s后放开，无动作
+  17          bool_t Get_Key_IsRelease(uint16_t MsgValue)
+  18          {
+  19   1        return (((MsgValue & cnKeyPressed) == 0) 
+  20   1            && (MsgValue < (cnKeyPressedT_1s & cnKeyUnpressed)) 
+  21   1            && IsKeyRelease());
+  22   1      }
+  23          
+  24          //判断长按键是否按下time时长? 立即执行动作
+  25          bool_t Get_Key_IsPressed(uint16_t MsgValue, uint16_t Time)
+  26          {
+  27   1        return ((MsgValue >= Time) && IsKeyRelease());
+  28   1      }
+  29          
+  30          static bool_t  bIsKeyPressed = FALSE;
+  31          static uint8_t KeyPressInterval = 0;
+  32          static uint8_t u8KeyNew, u8KeyTmp = 0;
+  33          static uint8_t rdKeyValue;
+  34          static uint32_t u32KeyValueFlag;
+  35          static uint16_t u16KeyPressedTmr = 0, u16KeyReleaseTmr = 0;
+  36          
+  37          /************************************************************
+  38          按键扫描调度：10ms task
+  39          *************************************************************/
+  40          static uint8_t ScanKeyRunCnt;
+  41          void ScanKey_Run_Task(void)
+  42          {
+  43   1        ++ScanKeyRunCnt;
+  44   1        if(ScanKeyRunCnt < cnKeyTaskT)
+  45   1          return;
+  46   1        ScanKeyRunCnt = 0;  
+  47   1      
+  48   1        //按键处理程序开始
+  49   1        u8KeyNew = cnMsgNull;
+  50   1        rdKeyValue = 0;
+  51   1        
+  52   1        if(KeyPressInterval > 0)
+  53   1          --KeyPressInterval;
+C51 COMPILER V9.59.0.0   SCAN_KEY                                                          06/27/2023 19:17:33 PAGE 2   
+
+  54   1      
+  55   1        //按键扫描
+  56   1        __CMS_CheckTouchKey();
+  57   1        rdKeyValue = (uint8_t)KeyFlag;
+  58   1      
+  59   1        bIsKeyPressed = TRUE;
+  60   1        switch(rdKeyValue)
+  61   1        {
+  62   2        case cnKey1:
+  63   2          u8KeyNew = cnMsgKeyPower;
+  64   2          break;
+  65   2        case cnKey2:
+  66   2          u8KeyNew = cnMsgKeyMenu;
+  67   2          break;
+  68   2        //case (cnKey3+cnKey1):
+  69   2        //  u8KeyNew = cnMsgKeyCmbDrying;
+  70   2        //  break;
+  71   2        //case (cnKey3+cnKey5):
+  72   2        //  u8KeyNew = cnMsgKeyCmbICT;
+  73   2        //  break;
+  74   2        
+  75   2        default:
+  76   2          u8KeyNew = cnMsgKey_Max;
+  77   2          break;
+  78   2        }
+  79   1      
+  80   1      
+  81   1        if(u16KeyReleaseTmr > 0)
+  82   1        {
+  83   2          //键释放防抖200
+  84   2          u16KeyReleaseTmr--;
+  85   2          if((u16KeyReleaseTmr == 0) && (rdKeyValue == 0))
+  86   2          {
+  87   3            // 所有键松开
+  88   3            u16KeyPressedTmr &= (~cnKeyPressed);
+  89   3      
+  90   3            if((u8KeyTmp > cnMsgKey) && (u8KeyTmp < cnMsgKey_Max))
+  91   3            {
+  92   4              StationRun(u8KeyTmp, u16KeyPressedTmr); /*按键释放优先调用处理函数*/
+  93   4            }
+  94   3            
+  95   3            SetkeyRelease();
+  96   3            u16KeyPressedTmr = 0;
+  97   3      
+  98   3            bIsKeyPressed = FALSE;
+  99   3            u8KeyNew = cnMsgKey;
+ 100   3            u8KeyTmp = cnMsgKey;
+ 101   3          }
+ 102   2        }
+ 103   1      
+ 104   1        if((u8KeyNew == u8KeyTmp) && (KeyPressInterval != 0))
+ 105   1        {
+ 106   2          //键压下防抖200
+ 107   2          return;
+ 108   2        }
+ 109   1        
+ 110   1        if((u8KeyNew > cnMsgKey) && (u8KeyNew < cnMsgKey_Max))
+ 111   1        {
+ 112   2          //有新键压下，则
+ 113   2          ++u16KeyPressedTmr; //定时器，按下计时
+ 114   2          u16KeyPressedTmr &= (~cnKeyPressed);
+ 115   2          if(u16KeyPressedTmr > cnKeyPressedT_Max)
+C51 COMPILER V9.59.0.0   SCAN_KEY                                                          06/27/2023 19:17:33 PAGE 3   
+
+ 116   2          {
+ 117   3            //超长按住约束
+ 118   3            u16KeyPressedTmr = cnKeyPressedT_Max;
+ 119   3          }
+ 120   2      
+ 121   2          if(bIsKeyPressed == TRUE)
+ 122   2          {
+ 123   3            #if 0 //20201120  // 长按某键后滑到旁边的键，会对新键做长按键处理bug
+                    if(u8KeyTmp != u8KeyNew)
+                    {
+                      if((u8KeyTmp > cnMsgKey) && (u8KeyTmp < cnMsgKey_Max))
+                      {
+                        StationRun(u8KeyTmp, u16KeyPressedTmr); /*按键释放优先调用处理函数*/
+                      }
+                      
+                      SetkeyRelease();
+                      u16KeyPressedTmr = 0;
+                    }
+                    #endif
+ 135   3      
+ 136   3            u8KeyTmp = u8KeyNew;
+ 137   3      
+ 138   3            u16KeyPressedTmr |= cnKeyPressed;
+ 139   3            KeyPressInterval = (cnKeyDebounceT / cnKeyTaskT);   // 等待下一个按键的时间
+ 140   3            u16KeyReleaseTmr = (cnKeyReleaseDebounceT / cnKeyTaskT);
+ 141   3          }
+ 142   2          
+ 143   2          StationRun(u8KeyNew, u16KeyPressedTmr);   
+ 144   2        }
+ 145   1      }
+ 146          
+ 147          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    293    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

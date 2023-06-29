@@ -1,0 +1,24 @@
+
+#ifndef	__H_INIT_
+#define	__H_INIT_
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef	__EXT_INIT_
+#define	INIT_EXT
+#else
+#define INIT_EXT		extern
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+#define InitEnd()			do{ WDT_EnableWDTReset(); IRQ_ALL_ENABLE(); }while(0)
+#define	ClearWDT()			do{ WDT_ClearWDT(); }while(0)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+INIT_EXT void Init_Con(void);
+INIT_EXT void Init_De(void);
+INIT_EXT void Init_Run_Task(void);
+
+INIT_EXT RET_CODE StationRun_Init(uint8_t Msg, MsgValue_t MsgValue);
+
+#endif
+

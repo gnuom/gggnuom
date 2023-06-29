@@ -1,0 +1,113 @@
+C51 COMPILER V9.59.0.0   HEATER                                                            06/27/2023 19:17:33 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE HEATER
+OBJECT MODULE PLACED IN ..\OBJ\heater.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\USER\driver\heater.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..\
+                    -FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\heater.lst) TAB
+                    -S(2) OBJECT(..\OBJ\heater.obj)
+
+line level    source
+
+   1          
+   2          #define __EXT_HEATER_
+   3          #include "Globals.h"
+   4          
+   5          ///////////////////////////////////////////////////////////////////////////////////////////////////
+   6          bool_t bHeaterOn;
+   7          
+   8          #define cnAlarmTempWHi      105   // 高温报警时加热体上的温度
+   9          #define cnAlarmTempWLow     55    // 高温报警回落时加热体上的温度
+  10          
+  11          #define cnTempCheckT      (1*(1000UL/cnTBaseT_100ms))
+  12          bool_t bTempHi, bResetTempHiCheck;
+  13          uint8_t TempHiCheckTmr, TempHiCheckCnt;
+  14          
+  15          void Heater_Init(void)
+  16          {
+  17   1        SetPortHeaterAsOut();
+  18   1        TurnOffHeater();
+  19   1      
+  20   1        ClrHeaterTempHi();
+  21   1        bResetTempHiCheck = FALSE;
+  22   1        TempHiCheckTmr = cnTempCheckT;
+  23   1        TempHiCheckCnt = 0;
+  24   1      }
+  25          
+  26          void Heater_Run_Task(void)
+  27          {
+  28   1        /* 
+  29   1          "ANY CASE heater temperature hits 125C: Red Color  on;
+  30   1          After 60s: Red Color off
+  31   1          OR if heater temperature goes below 75C: Red Color off"
+  32   1        */
+  33   1        if(IsHeaterTempHi())
+  34   1        {
+  35   2          Heater_Off();
+  36   2          if(GetTempNTC() < cnAlarmTempWLow)
+  37   2            ++TempHiCheckCnt;
+  38   2        }
+  39   1        else
+  40   1        {
+  41   2          if(IsNTCTempHi() || (GetTempNTC() > cnAlarmTempWHi))
+  42   2            ++TempHiCheckCnt;
+  43   2      
+  44   2          
+  45   2          if(bHeaterOn)
+  46   2            Heater_On();
+  47   2          else
+  48   2            Heater_Off();
+  49   2        }
+  50   1      
+  51   1        if(TempHiCheckTmr == 0)
+  52   1        {
+  53   2          if(bResetTempHiCheck)
+C51 COMPILER V9.59.0.0   HEATER                                                            06/27/2023 19:17:33 PAGE 2   
+
+  54   2          {
+  55   3            bResetTempHiCheck = FALSE;
+  56   3            TempHiCheckCnt = 0;
+  57   3          }
+  58   2        
+  59   2          if(IsHeaterTempHi())
+  60   2          {
+  61   3            if(TempHiCheckCnt > (cnTempCheckT*4/5))
+  62   3              ClrHeaterTempHi();
+  63   3            else
+  64   3              SetHeaterTempHi();
+  65   3          }
+  66   2          else
+  67   2          {
+  68   3            if(TempHiCheckCnt > (cnTempCheckT*4/5))
+  69   3              SetHeaterTempHi();
+  70   3            else
+  71   3              ClrHeaterTempHi();
+  72   3          } 
+  73   2      
+  74   2        
+  75   2          TempHiCheckTmr = cnTempCheckT;
+  76   2          TempHiCheckCnt = 0;
+  77   2        }
+  78   1      
+  79   1        --TempHiCheckTmr;
+  80   1      }
+  81          
+  82          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    155    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

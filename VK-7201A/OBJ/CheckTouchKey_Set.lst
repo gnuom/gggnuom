@@ -1,0 +1,398 @@
+C51 COMPILER V9.59.0.0   CHECKTOUCHKEY_SET                                                 06/27/2023 19:17:32 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE CHECKTOUCHKEY_SET
+OBJECT MODULE PLACED IN ..\OBJ\CheckTouchKey_Set.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\TOUCHLib\CheckTouchKey_Set.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\
+                    -CORE;..\FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\CheckTo
+                    -uchKey_Set.lst) TABS(2) OBJECT(..\OBJ\CheckTouchKey_Set.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * Copyright (C) 2019 China Micro Semiconductor Limited Company. All Rights Reserved.
+   3          *
+   4          * This software is owned and published by:
+   5          * CMS LLC, No 2609-10, Taurus Plaza, TaoyuanRoad, NanshanDistrict, Shenzhen, China.
+   6          *
+   7          * BY DOWNLOADING, INSTALLING OR USING THIS SOFTWARE, YOU AGREE TO BE BOUND
+   8          * BY ALL THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+   9          *
+  10          * This software contains source code for use with CMS
+  11          * components. This software is licensed by CMS to be adapted only
+  12          * for use in systems utilizing CMS components. CMS shall not be
+  13          * responsible for misuse or illegal use of this software for devices not
+  14          * supported herein. CMS is providing this software "AS IS" and will
+  15          * not be responsible for issues arising from incorrect user implementation
+  16          * of the software.
+  17          *
+  18          * This software may be replicated in part or whole for the licensed use,
+  19          * with the restriction that this Disclaimer and Copyright notice must be
+  20          * included with each copy of this software, whether used in part or whole,
+  21          * at all times.
+  22          */
+  23          /****************************************************************************/
+  24          /** \file CheckTouchKey_Set_80F73xx.c
+  25          **
+  26          ** 
+  27          **
+  28          **  History:
+  29          **  
+  30          *****************************************************************************/
+  31          /****************************************************************************/
+  32          /*  include files
+  33          *****************************************************************************/
+  34          #include "cms80f731xx.h"
+  35          #include "CheckTouchKey_Set.h"
+  36          /****************************************************************************/
+  37          /*  Local pre-processor symbols('#define')
+  38          *****************************************************************************/
+  39          
+  40          /****************************************************************************/
+  41          /*  Global variable definitions(declared in header file with 'extern')
+  42          *****************************************************************************/
+  43          //检测通道设定
+  44          unsigned char code Table_KeyChannel[C_KEY_TOTAL] = {
+  45          #if ((C_KEY_TOTAL-0)  > 0)//CCKEY1_USER
+  46            C_KEY1_CH,  //按键1对应触摸通道   
+  47          #endif      
+  48          #if ((C_KEY_TOTAL-1)> 0)//CCKEY2_USER 
+  49            C_KEY2_CH,  //按键2对应触摸通道   
+  50          #endif      
+  51          #if ((C_KEY_TOTAL-2)> 0)//CCKEY3_USER 
+                C_KEY3_CH,      
+              #endif      
+C51 COMPILER V9.59.0.0   CHECKTOUCHKEY_SET                                                 06/27/2023 19:17:32 PAGE 2   
+
+  54          #if ((C_KEY_TOTAL-3)> 0)//CCKEY4_USER 
+                C_KEY4_CH,      
+              #endif      
+  57          #if ((C_KEY_TOTAL-4)> 0)//CCKEY5_USER 
+                C_KEY5_CH,      
+              #endif      
+  60          #if ((C_KEY_TOTAL-5)> 0)//CCKEY6_USER 
+                C_KEY6_CH,      
+              #endif      
+  63          #if ((C_KEY_TOTAL-6)> 0)//CCKEY7_USER 
+                C_KEY7_CH,      
+              #endif      
+  66          #if ((C_KEY_TOTAL-7)> 0)//CCKEY8_USER 
+                C_KEY8_CH,      
+              #endif      
+  69          #if ((C_KEY_TOTAL-8)> 0)//CCKEY9_USER 
+                C_KEY9_CH,      
+              #endif      
+  72          #if ((C_KEY_TOTAL-9)> 0)//CCKEY10_USER  
+                C_KEY10_CH,     
+              #endif      
+  75          #if ((C_KEY_TOTAL-10)>  0)//CCKEY11_USER  
+                C_KEY11_CH,     
+              #endif      
+  78          #if ((C_KEY_TOTAL-11)>  0)//CCKEY12_USER  
+                C_KEY12_CH,     
+              #endif      
+  81          #if ((C_KEY_TOTAL-12)>  0)//CCKEY13_USER  
+                C_KEY13_CH,     
+              #endif      
+  84          #if ((C_KEY_TOTAL-13)>  0)//CCKEY14_USER  
+                C_KEY14_CH,     
+              #endif      
+  87          #if ((C_KEY_TOTAL-14)>  0)//CCKEY15_USER  
+                C_KEY15_CH,     
+              #endif      
+  90          #if ((C_KEY_TOTAL-15)>  0)//CCKEY16_USER  
+                C_KEY16_CH,     
+              #endif      
+  93          #if ((C_KEY_TOTAL-16)>  0)//CCKEY17_USER  
+                C_KEY17_CH,     
+              #endif      
+  96          #if ((C_KEY_TOTAL-17)>  0)//CCKEY18_USER  
+                C_KEY18_CH,     
+              #endif      
+  99          #if ((C_KEY_TOTAL-18)>  0)//CCKEY19_USER  
+                C_KEY19_CH,     
+              #endif      
+ 102          #if ((C_KEY_TOTAL-19)>  0)//CCKEY20_USER  
+                C_KEY20_CH,     
+              #endif      
+ 105          #if ((C_KEY_TOTAL-20)>  0)//CCKEY21_USER  
+                C_KEY21_CH,     
+              #endif      
+ 108          #if ((C_KEY_TOTAL-21)>  0)//CCKEY22_USER  
+                C_KEY22_CH,     
+              #endif      
+ 111          #if ((C_KEY_TOTAL-22)>  0)//CCKEY23_USER  
+                C_KEY23_CH,     
+              #endif      
+ 114          #if ((C_KEY_TOTAL-23)>  0)//CCKEY24_USER  
+                C_KEY24_CH,     
+C51 COMPILER V9.59.0.0   CHECKTOUCHKEY_SET                                                 06/27/2023 19:17:32 PAGE 3   
+
+              #endif      
+ 117          #if ((C_KEY_TOTAL-24)>  0)//CCKEY25_USER  
+                C_KEY25_CH,     
+              #endif      
+ 120          #if ((C_KEY_TOTAL-25)>  0)//CCKEY26_USER  
+                C_KEY26_CH,     
+              #endif
+ 123          
+ 124          };
+ 125          
+ 126          //
+ 127          unsigned int code Table_KeyDown[C_KEY_TOTAL] = 
+ 128          {
+ 129            #if ((C_KEY_TOTAL-0)> 0)    
+ 130            C_KEY1_THRESHOLD,       
+ 131            #endif      
+ 132            #if ((C_KEY_TOTAL-1)> 0)    
+ 133            C_KEY2_THRESHOLD,       
+ 134            #endif      
+ 135            #if ((C_KEY_TOTAL-2)> 0)    
+                C_KEY3_THRESHOLD,       
+                #endif      
+ 138            #if ((C_KEY_TOTAL-3)> 0)    
+                C_KEY4_THRESHOLD,       
+                #endif      
+ 141            #if ((C_KEY_TOTAL-4)> 0)//
+                C_KEY5_THRESHOLD,       
+                #endif      
+ 144            #if ((C_KEY_TOTAL-5)> 0)//
+                C_KEY6_THRESHOLD,       
+                #endif      
+ 147            #if ((C_KEY_TOTAL-6)> 0)//
+                C_KEY7_THRESHOLD,       
+                #endif      
+ 150            #if ((C_KEY_TOTAL-7)> 0)//
+                C_KEY8_THRESHOLD,       
+                #endif      
+ 153            #if ((C_KEY_TOTAL-8)> 0)//
+                C_KEY9_THRESHOLD,       
+                #endif      
+ 156            #if ((C_KEY_TOTAL-9)> 0)//
+                C_KEY10_THRESHOLD,        
+                #endif      
+ 159            #if ((C_KEY_TOTAL-10)> 0)//
+                C_KEY11_THRESHOLD,        
+                #endif      
+ 162            #if ((C_KEY_TOTAL-11)> 0)//
+                C_KEY12_THRESHOLD,        
+                #endif      
+ 165            #if ((C_KEY_TOTAL-12)> 0)//
+                C_KEY13_THRESHOLD,        
+                #endif      
+ 168            #if ((C_KEY_TOTAL-13)> 0)//
+                C_KEY14_THRESHOLD,        
+                #endif      
+ 171            #if ((C_KEY_TOTAL-14)> 0)//
+                C_KEY15_THRESHOLD,        
+                #endif      
+ 174            #if ((C_KEY_TOTAL-15)> 0)//
+                C_KEY16_THRESHOLD,        
+                #endif      
+ 177            #if ((C_KEY_TOTAL-16)> 0)//
+C51 COMPILER V9.59.0.0   CHECKTOUCHKEY_SET                                                 06/27/2023 19:17:32 PAGE 4   
+
+                C_KEY17_THRESHOLD,        
+                #endif      
+ 180            #if ((C_KEY_TOTAL-17)> 0)//
+                C_KEY18_THRESHOLD,        
+                #endif      
+ 183            #if ((C_KEY_TOTAL-18)> 0)//
+                C_KEY19_THRESHOLD,        
+                #endif      
+ 186            #if ((C_KEY_TOTAL-19)> 0)//
+                C_KEY20_THRESHOLD,        
+                #endif      
+ 189            #if ((C_KEY_TOTAL-20)> 0)//
+                C_KEY21_THRESHOLD,        
+                #endif      
+ 192            #if ((C_KEY_TOTAL-21)> 0)//
+                C_KEY22_THRESHOLD,        
+                #endif      
+ 195            #if ((C_KEY_TOTAL-22)> 0)//
+                C_KEY23_THRESHOLD,        
+                #endif      
+ 198            #if ((C_KEY_TOTAL-23)> 0)//
+                C_KEY24_THRESHOLD,        
+                #endif      
+ 201            #if ((C_KEY_TOTAL-24)> 0)//
+                C_KEY25_THRESHOLD,        
+                #endif      
+ 204            #if ((C_KEY_TOTAL-25)> 0)//
+                C_KEY26_THRESHOLD,        
+                #endif
+ 207          
+ 208          };
+ 209          
+ 210          //内部并联电容选择
+ 211          unsigned char code Table_KeyCap[C_KEY_TOTAL] = 
+ 212          {
+ 213            #if ((C_KEY_TOTAL-0)> 0)    
+ 214            C_KEY1_CAP,       
+ 215            #endif      
+ 216            #if ((C_KEY_TOTAL-1)> 0)    
+ 217            C_KEY2_CAP,       
+ 218            #endif      
+ 219            #if ((C_KEY_TOTAL-2)> 0)    
+                C_KEY3_CAP,       
+                #endif      
+ 222            #if ((C_KEY_TOTAL-3)> 0)    
+                C_KEY4_CAP,       
+                #endif      
+ 225            #if ((C_KEY_TOTAL-4)> 0)//
+                C_KEY5_CAP,       
+                #endif      
+ 228            #if ((C_KEY_TOTAL-5)> 0)//
+                C_KEY6_CAP,       
+                #endif      
+ 231            #if ((C_KEY_TOTAL-6)> 0)//
+                C_KEY7_CAP,       
+                #endif      
+ 234            #if ((C_KEY_TOTAL-7)> 0)//
+                C_KEY8_CAP,       
+                #endif      
+ 237            #if ((C_KEY_TOTAL-8)> 0)//
+                C_KEY9_CAP,       
+                #endif      
+C51 COMPILER V9.59.0.0   CHECKTOUCHKEY_SET                                                 06/27/2023 19:17:32 PAGE 5   
+
+ 240            #if ((C_KEY_TOTAL-9)> 0)//
+                C_KEY10_CAP,        
+                #endif      
+ 243            #if ((C_KEY_TOTAL-10)> 0)//
+                C_KEY11_CAP,        
+                #endif      
+ 246            #if ((C_KEY_TOTAL-11)> 0)//
+                C_KEY12_CAP,        
+                #endif      
+ 249            #if ((C_KEY_TOTAL-12)> 0)//
+                C_KEY13_CAP,        
+                #endif      
+ 252            #if ((C_KEY_TOTAL-13)> 0)//
+                C_KEY14_CAP,        
+                #endif      
+ 255            #if ((C_KEY_TOTAL-14)> 0)//
+                C_KEY15_CAP,        
+                #endif      
+ 258            #if ((C_KEY_TOTAL-15)> 0)//
+                C_KEY16_CAP,        
+                #endif      
+ 261            #if ((C_KEY_TOTAL-16)> 0)//
+                C_KEY17_CAP,        
+                #endif      
+ 264            #if ((C_KEY_TOTAL-17)> 0)//
+                C_KEY18_CAP,        
+                #endif      
+ 267            #if ((C_KEY_TOTAL-18)> 0)//
+                C_KEY19_CAP,        
+                #endif      
+ 270            #if ((C_KEY_TOTAL-19)> 0)//
+                C_KEY20_CAP,        
+                #endif      
+ 273            #if ((C_KEY_TOTAL-20)> 0)//
+                C_KEY21_CAP,        
+                #endif      
+ 276            #if ((C_KEY_TOTAL-21)> 0)//
+                C_KEY22_CAP,        
+                #endif      
+ 279            #if ((C_KEY_TOTAL-22)> 0)//
+                C_KEY23_CAP,        
+                #endif      
+ 282            #if ((C_KEY_TOTAL-23)> 0)//
+                C_KEY24_CAP,        
+                #endif      
+ 285            #if ((C_KEY_TOTAL-24)> 0)//
+                C_KEY25_CAP,        
+                #endif      
+ 288            #if ((C_KEY_TOTAL-25)> 0)//
+                C_KEY26_CAP,        
+                #endif
+ 291          };
+ 292          
+ 293          
+ 294          
+ 295          //Debug相关
+ 296          #ifdef  CMS_TOUCH_DEBUG
+              unsigned int xdata g_FactorRawDat[C_KEY_TOTAL];
+              unsigned int xdata g_Disp_KeyDown[C_KEY_TOTAL];
+              unsigned int xdata g_Disp_KeyDown_Pro[C_KEY_TOTAL];
+              unsigned int xdata g_NoiseDat[C_KEY_TOTAL];
+              #endif
+C51 COMPILER V9.59.0.0   CHECKTOUCHKEY_SET                                                 06/27/2023 19:17:32 PAGE 6   
+
+ 302          /*-------------------------------------------------------
+ 303          以下请勿修改
+ 304          -------------------------------------------------------*/
+ 305          //若startup.a51里没有对xdata进行上电清0的配置，则此部分xdata需要上电程序清0
+ 306          unsigned int xdata g_CMS_RAM0[C_KEY_TOTAL];
+ 307          unsigned int xdata g_CMS_RAM1[C_KEY_TOTAL];
+ 308          unsigned int xdata g_CMS_RAM2[C_KEY_TOTAL];
+ 309          unsigned int xdata g_CMS_RAM3[C_KEY_TOTAL];
+ 310          unsigned int xdata g_CMS_RAM4[C_KEY_TOTAL];
+ 311          unsigned int xdata g_CMS_RAM5[C_KEY_TOTAL];
+ 312          unsigned int xdata g_CMS_RAM6[C_KEY_TOTAL];
+ 313          unsigned char xdata g_CMS_RAM7[C_KEY_TOTAL];
+ 314          unsigned char xdata g_CMS_RAM8[C_KEY_TOTAL];
+ 315          unsigned char xdata g_CMS_RAM9[C_KEY_TOTAL];
+ 316          unsigned char xdata g_CMS_RAM10[C_KEY_TOTAL];
+ 317          unsigned char xdata g_CMS_RAM11[C_KEY_TOTAL];
+ 318          unsigned char xdata g_CMS_RAM12[C_KEY_TOTAL];
+ 319          unsigned char xdata g_CMS_RAM13[C_KEY_TOTAL];
+ 320          unsigned char xdata g_CMS_RAM14[C_KEY_TOTAL];
+ 321          unsigned char xdata g_CMS_RAM15[C_KEY_TOTAL];
+ 322          
+ 323          unsigned char code g__KeyTotalNumber = C_KEY_TOTAL;
+ 324          unsigned char code g__KeyShakeCounter = C_KEY_SHAKE;
+ 325          unsigned char code g__VolValue = VOL_VALUE;
+ 326          unsigned char code g__SluValue = SLU_VALUE;
+ 327          unsigned char code g__CmBase = CM_BASE;
+ 328          unsigned char code g__KeyValidNumber = C_VALID_KEY;
+ 329          unsigned long int code g__KeyValidTime = C_VALID_TIME;
+ 330          unsigned char code g__KeyUNTime = C_UN_TIME;
+ 331          unsigned char code g__UnNol_Check = UNNOL_CHECK;
+ 332          unsigned char code g__UnNol_Times = UNNOL_TIMES;
+ 333          unsigned char code g__LMDValue = LMDVALUE;
+ 334          unsigned char code g__Key_LDOSel = KEY_LDOSEL;
+ 335          unsigned char code g__Key_En1kres = KEY_EN1KRES;
+ 336          unsigned char code g__WaterMode = WATER_MODE;
+ 337          unsigned char code g__CMS_Key_Disp = CMS_KEY_DISP;
+ 338          
+ 339          /****************************************************************************/
+ 340          /*  Local type definitions('typedef')
+ 341          *****************************************************************************/
+ 342          
+ 343          /****************************************************************************/
+ 344          /*  Local variable  definitions('static')
+ 345          *****************************************************************************/
+ 346          
+ 347          /****************************************************************************/
+ 348          /*  Local function prototypes('static')
+ 349          *****************************************************************************/
+ 350          
+ 351          /****************************************************************************/
+ 352          /*  Function implementation - global ('extern') and local('static')
+ 353          *****************************************************************************/
+ 354          
+ 355          
+ 356          
+ 357          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =     26    ----
+   XDATA SIZE       =     46    ----
+C51 COMPILER V9.59.0.0   CHECKTOUCHKEY_SET                                                 06/27/2023 19:17:32 PAGE 7   
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

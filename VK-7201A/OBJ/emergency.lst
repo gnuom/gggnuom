@@ -1,0 +1,183 @@
+C51 COMPILER V9.59.0.0   EMERGENCY                                                         06/27/2023 19:17:34 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE EMERGENCY
+OBJECT MODULE PLACED IN ..\OBJ\emergency.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\USER\event\emergency.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;.
+                    -.\FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\emergency.lst
+                    -) TABS(2) OBJECT(..\OBJ\emergency.obj)
+
+line level    source
+
+   1          
+   2          #define __EXT_EMERGENCY_
+   3          #include "Globals.h"
+   4          
+   5          ///////////////////////////////////////////////////////////////////////////////////////////////////
+   6          #define cnEmergencyRunT_NTCBroken     (1*60UL*(1000UL/cnTBaseT_200ms))
+   7          #define cnEmergencyRunT_TempHi        (3*60UL*(1000UL/cnTBaseT_200ms))
+   8          
+   9          static uint16_t EmergencyRunTmr;
+  10          Emergency_T emergencyType;
+  11          void Emergency_Con(void)
+  12          {
+  13   1        Heat_Stop();
+  14   1      
+  15   1        SetWorkMode(cnFuncNumEmergency);
+  16   1      }
+  17          
+  18          void Emergency_NTCCon(void)
+  19          {
+  20   1        TurnOnLedPowerFlash300ms();
+  21   1      
+  22   1        emergencyType = cnEmergencyType_NTCBroken;
+  23   1        EmergencyRunTmr = cnEmergencyRunT_NTCBroken;
+  24   1        Emergency_Con();
+  25   1      }
+  26          
+  27          void Emergency_TempHiCon(void)
+  28          {
+  29   1        TurnOnLedPower();
+  30   1        TurnOnLedCookedAllFlash300ms();
+  31   1        TurnOnLedCookedMedFlash300ms();
+  32   1        TurnOnLedCookedHotFlash300ms();
+  33   1        TurnOnLedSteamFlash300ms();
+  34   1        TurnOnLedCookingFlash300ms();
+  35   1      
+  36   1        emergencyType = cnEmergencyType_TempHi;
+  37   1        EmergencyRunTmr = cnEmergencyRunT_TempHi;
+  38   1        Emergency_Con();
+  39   1      }
+  40          
+  41          void Emergency_De(void)
+  42          {
+  43   1        TurnOffAllLed();
+  44   1        TurnOnLedPower();
+  45   1      
+  46   1        EmergencyRunTmr = 0;
+  47   1        emergencyType = cnEmergencyType_Null;
+  48   1      }
+  49          
+  50          enum {
+  51            cnEmergency_ToNothing = 0,
+  52            cnEmergency_ToIdleMode,
+  53            cnEmergency_ToResumeWorkMode,
+C51 COMPILER V9.59.0.0   EMERGENCY                                                         06/27/2023 19:17:34 PAGE 2   
+
+  54          
+  55            cnEmergency_ToMax
+  56          };
+  57          void Emergency_Run_Task(void)
+  58          {
+  59   1        uint8_t ToSomeWorkMode;
+  60   1      
+  61   1        if(IsCurWorkModeEmergency())
+  62   1        {
+  63   2          Heat_Stop();
+  64   2      
+  65   2          ToSomeWorkMode = cnEmergency_ToNothing;
+  66   2          if(EmergencyRunTmr == 0)
+  67   2            ToSomeWorkMode = cnEmergency_ToIdleMode;
+  68   2          else
+  69   2          {
+  70   3            --EmergencyRunTmr;
+  71   3          
+  72   3            switch(emergencyType)
+  73   3            {
+  74   4            case cnEmergencyType_NTCBroken:
+  75   4              {
+  76   5                if(!IsNTCBroken())
+  77   5                  ToSomeWorkMode = cnEmergency_ToIdleMode;
+  78   5              }
+  79   4              break;
+  80   4            case cnEmergencyType_TempHi:
+  81   4              {
+  82   5                if(!IsHeaterTempHi())
+  83   5                  ToSomeWorkMode = cnEmergency_ToIdleMode;
+  84   5              }
+  85   4              break;
+  86   4            default:
+  87   4              break;
+  88   4            }
+  89   3          }
+  90   2      
+  91   2          if(ToSomeWorkMode == cnEmergency_ToIdleMode)
+  92   2          {
+  93   3            Emergency_De();
+  94   3            Idle_Con();
+  95   3          }
+  96   2          else if(ToSomeWorkMode == cnEmergency_ToResumeWorkMode)
+  97   2          {
+  98   3            Emergency_De();
+  99   3            ResumeWorkMode();
+ 100   3            switch(GetCurWorkMode())
+ 101   3            {
+ 102   4            case cnFuncNumWorking:
+ 103   4              Working_Con();
+ 104   4              break;
+ 105   4            default:
+ 106   4              Idle_Con();
+ 107   4              break;
+ 108   4            }
+ 109   3          }
+ 110   2        }
+ 111   1      }
+ 112          
+ 113          static RET_CODE Emergency_MsgFunc_Key_Power(MsgValue_t MsgValue)
+ 114          {
+ 115   1        if(Get_Key_IsRelease(MsgValue))
+C51 COMPILER V9.59.0.0   EMERGENCY                                                         06/27/2023 19:17:34 PAGE 3   
+
+ 116   1        {
+ 117   2          Set_Key_Processed();
+ 118   2      
+ 119   2          Emergency_De();
+ 120   2          Idle_Con();
+ 121   2        }
+ 122   1        
+ 123   1        return cnSuccess;
+ 124   1      }
+ 125          
+ 126          
+ 127          ///////////////////////////////////////////////////////////////////////////////////////////////////
+ 128          // cnFuncNumEmergency,        // ½ô¼±Ä£Ê½
+ 129          RET_CODE StationRun_Emergency(uint8_t Msg, MsgValue_t MsgValue)
+ 130          {
+ 131   1        RET_CODE retCode = cnFailure;
+ 132   1      
+ 133   1        switch(Msg)
+ 134   1        {
+ 135   2        case cnMsgKeyPower:
+ 136   2          retCode = Emergency_MsgFunc_Key_Power(MsgValue);
+ 137   2          break;
+ 138   2        case cnMsgKeyMenu:
+ 139   2          retCode = NullRoutine(MsgValue);
+ 140   2          break;
+ 141   2          
+ 142   2        default:
+ 143   2          retCode = cnNoRespond;
+ 144   2          break;
+ 145   2        }
+ 146   1      
+ 147   1        return retCode;
+ 148   1      }
+ 149          
+ 150          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    283    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

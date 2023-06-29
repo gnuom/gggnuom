@@ -1,0 +1,1 @@
+"..\USER\driver\GetADC.c" OMF2 OPTIMIZE (8,SPEED) BROWSE INCDIR(..\CORE;..\FWLib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\GetADC.lst) TABS (2) OBJECT(..\OBJ\GetADC.obj)

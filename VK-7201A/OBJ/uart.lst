@@ -1,0 +1,555 @@
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN ..\OBJ\uart.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\FWLib\src\uart.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..\FWLi
+                    -b\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\uart.lst) TABS(2) O
+                    -BJECT(..\OBJ\uart.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * Copyright (C) 2019 China Micro Semiconductor Limited Company. All Rights Reserved.
+   3          *
+   4          * This software is owned and published by:
+   5          * CMS LLC, No 2609-10, Taurus Plaza, TaoyuanRoad, NanshanDistrict, Shenzhen, China.
+   6          *
+   7          * BY DOWNLOADING, INSTALLING OR USING THIS SOFTWARE, YOU AGREE TO BE BOUND
+   8          * BY ALL THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+   9          *
+  10          * This software contains source code for use with CMS
+  11          * components. This software is licensed by CMS to be adapted only
+  12          * for use in systems utilizing CMS components. CMS shall not be
+  13          * responsible for misuse or illegal use of this software for devices not
+  14          * supported herein. CMS is providing this software "AS IS" and will
+  15          * not be responsible for issues arising from incorrect user implementation
+  16          * of the software.
+  17          *
+  18          * This software may be replicated in part or whole for the licensed use,
+  19          * with the restriction that this Disclaimer and Copyright notice must be
+  20          * included with each copy of this software, whether used in part or whole,
+  21          * at all times.
+  22          */
+  23          
+  24          /****************************************************************************/
+  25          /** \file uart.c
+  26          **
+  27          **  
+  28          **
+  29          **  History:
+  30          **  
+  31          *****************************************************************************/
+  32          /****************************************************************************/
+  33          /*  include files
+  34          *****************************************************************************/
+  35          #include "uart.h"
+  36          /****************************************************************************/
+  37          /*  Local pre-processor symbols/macros('#define')
+  38          ****************************************************************************/
+  39          
+  40          /****************************************************************************/
+  41          /*  Global variable definitions(declared in header file with 'extern')
+  42          ****************************************************************************/
+  43          
+  44          /****************************************************************************/
+  45          /*  Local type definitions('typedef')
+  46          ****************************************************************************/
+  47          
+  48          /****************************************************************************/
+  49          /*  Local variable  definitions('static')
+  50          ****************************************************************************/
+  51          
+  52          /****************************************************************************/
+  53          /*  Local function prototypes('static')
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 2   
+
+  54          ****************************************************************************/
+  55          /******************************************************************************
+  56           ** \brief UART_ConfigRunMode
+  57           **     配置UART运行模式
+  58           ** \param [in]     UARTn:      (1)UART0
+  59           **                 (2)UART1
+  60           **         UARTMode:   (1)UART_MOD_SYN : 同步模式
+  61           **                 (2)UART_MOD_ASY_8BIT: 8位异步模式
+  62           **                 (3)UART_MOD_ASY_9BIT：9位异步模式
+  63           **                 (4)UART_MOD_ASY_9BIT_STATIC：9位波特率固定异步模式
+  64           **         UARTBaudTimer:  (1)UART_BAUD_TMR1 : Timer1产生波特率
+  65           **                 (2)UART_BAUD_TMR4 : Timer4产生波特率
+  66           **                 (3)UART_BAUD_TMR2 : Timer2产生波特率
+  67           **                 (4)UART_BAUD_BRT : BRT产生波特率
+  68           ** \return none
+  69          ******************************************************************************/
+  70          void UART_ConfigRunMode(uint8_t UARTn, uint8_t UARTMode, uint8_t UARTBaudTimer)
+  71          { 
+  72   1        if(UARTn == UART0)
+  73   1        {
+  74   2          SCON0 &= ~(UART_SCON0_U0SMn_Msk);
+  75   2          SCON0 |= (UARTMode<< UART_SCON0_U0SMn_Pos);
+  76   2          FUNCCR &= ~(SYS_FUNCCR_UART0_CKS_Msk);
+  77   2          FUNCCR |= UARTBaudTimer;
+  78   2        }
+  79   1        if(UARTn == UART1)
+  80   1        {
+  81   2          SCON1 &= ~(UART_SCON1_U1SMn_Msk);
+  82   2          SCON1 |= (UARTMode<< UART_SCON1_U1SMn_Pos);   
+  83   2          FUNCCR &= ~(SYS_FUNCCR_UART1_CKS_Msk);    
+  84   2          FUNCCR |= UARTBaudTimer <<SYS_FUNCCR_UART1_CKS_Pos;         
+  85   2        }   
+  86   1      }
+  87          /******************************************************************************
+  88           ** \brief UART_EnableDoubleFrequency
+  89           **     使能UART波特率倍频模式
+  90           ** \param [in]    UARTn: (1) UART0
+  91           **             (2) UART1
+  92           ** \return none
+  93          ******************************************************************************/
+  94          void UART_EnableDoubleFrequency(uint8_t UARTn)
+  95          {
+  96   1        if(UARTn == UART0)
+  97   1        {
+  98   2          PCON |= SYS_PCON_SMOD0_Msk;
+  99   2        }
+ 100   1        if(UARTn == UART1)
+ 101   1        {
+ 102   2          PCON |= SYS_PCON_SMOD1_Msk;
+ 103   2        }
+ 104   1      }
+ 105          /******************************************************************************
+ 106           ** \brief UART_DisableDoubleFrequency
+ 107           **     关闭UART波特率倍频模式
+ 108           ** \param [in]    UARTn: (1) UART0
+ 109           **             (2) UART1
+ 110           ** \return none
+ 111          ******************************************************************************/
+ 112          void UART_DisableDoubleFrequency(uint8_t UARTn)
+ 113          {
+ 114   1        if(UARTn == UART0)
+ 115   1        {
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 3   
+
+ 116   2          PCON &= ~(SYS_PCON_SMOD0_Msk);
+ 117   2        }
+ 118   1        if(UARTn == UART1)
+ 119   1        {
+ 120   2          PCON &= ~(SYS_PCON_SMOD1_Msk);
+ 121   2        }
+ 122   1      }
+ 123          
+ 124          /******************************************************************************
+ 125           ** \brief UART_ConfigBaudRate
+ 126           **     配置UART波特率
+ 127           ** \param [in]    UARTn: (1) UART0
+ 128           **             (2) UART1
+ 129           **         BaudRateValue:  波特率值
+ 130           ** \return Timer1/4: 8位自动重装模式的THx值
+ 131           **     Timer2: 16 位自动重装模式的 RLDH:RLDL 值
+ 132           **     BRT: 16 位定时模式 BRTH:BRTL 值
+ 133          ******************************************************************************/
+ 134          uint16_t UART_ConfigBaudRate(uint8_t UARTn, uint32_t  BaudRateValue)
+ 135          {
+ 136   1      #ifdef  USE_FORMULA
+                float  BaudRateTemp =0; 
+                float  BaudRate = 0.55;
+                uint16_t PeriodValue =0;
+                uint8_t  SMOD_Flag =0;
+                uint8_t  T_Flag =0; 
+                uint8_t  BaudRateTimer =0;
+                
+                SMOD_Flag = 1;    
+                if(UARTn == UART0)
+                { 
+                  if(PCON & SYS_PCON_SMOD0_Msk)
+                  {
+                    SMOD_Flag = 2;            /*获取SMOD位*/
+                  } 
+                  BaudRateTimer = FUNCCR & SYS_FUNCCR_UART0_CKS_Msk;      
+                }
+                if(UARTn == UART1)
+                { 
+                  if(PCON & SYS_PCON_SMOD1_Msk)
+                  {
+                    SMOD_Flag = 2;            /*获取SMOD位*/
+                  } 
+                  BaudRateTimer = (FUNCCR & SYS_FUNCCR_UART1_CKS_Msk) >> SYS_FUNCCR_UART1_CKS_Pos;
+                } 
+                switch(BaudRateTimer)
+                {
+                  case UART_BAUD_TMR1:  // Timer1
+                    T_Flag = ((CKCON & TMR_CKCON_T1M_Msk)? 1:3);    /*获取T1M位*/
+                    BaudRateTemp = 256 - SystemClock *SMOD_Flag/ 32 / 4 /T_Flag/BaudRateValue;          
+                    break;
+                  case UART_BAUD_TMR4:  // Timer4
+                    T_Flag = ((T34MOD & TMR_T34MOD_T4M_Msk)? 1:3);    /*获取T4M位*/
+                    BaudRateTemp = 256 - SystemClock *SMOD_Flag/ 32 / 4 /T_Flag/BaudRateValue;      
+                    break;
+                  case UART_BAUD_TMR2:  // Timer2
+                    T_Flag = (( T2CON & TMR_T2CON_T2PS_Msk)? 2:1);      /*获取T2PS位*/
+                    BaudRateTemp = 65536 - SystemClock *SMOD_Flag/ 32 / 12 /T_Flag/BaudRateValue;     
+                    break;      
+                  case UART_BAUD_BRT: // BRT
+                    T_Flag = BRTCON & UART_BRTCON_BRTCKDIV_Msk;   /*获取BRTCLKVIV位*/
+                    BaudRateTemp = 65536 - SystemClock *SMOD_Flag/ 32 / (1<< T_Flag)/BaudRateValue; 
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 4   
+
+                    break;        
+                  default:
+                    break;
+                }       
+                if((BaudRateTemp - (uint16_t) BaudRateTemp) > BaudRate)
+                {
+                  PeriodValue = (uint16_t)BaudRateTemp + 1;
+                }
+                else
+                {
+                  PeriodValue = BaudRateTemp;
+                } 
+                return (PeriodValue);
+              #else 
+ 192   1        UARTn =0;
+ 193   1        BaudRateValue =0;
+ 194   1        return 0;
+ 195   1      #endif 
+ 196   1      }
+ 197          
+ 198          /******************************************************************************
+ 199           ** \brief UART_EnableReceive
+ 200           **     开启接收模式
+ 201           ** \param [in]    UARTn: (1) UART0
+ 202           **             (2) UART1
+ 203           ** \return 
+ 204          ******************************************************************************/
+ 205          void UART_EnableReceive(uint8_t UARTn)
+ 206          {
+ 207   1        if(UARTn == UART0)
+ 208   1        {
+ 209   2          SCON0 |= UART_SCON0_U0REN_Msk;
+ 210   2        }
+ 211   1        if(UARTn == UART1)
+ 212   1        {
+ 213   2          SCON1 |= UART_SCON1_U1REN_Msk;
+ 214   2        }
+ 215   1      }
+ 216          /******************************************************************************
+ 217           ** \brief UART_DisableReceive
+ 218           **     关闭接收模式
+ 219           ** \param [in]    UARTn: (1) UART0
+ 220           **             (2) UART1
+ 221           ** \return 
+ 222          ******************************************************************************/
+ 223          void UART_DisableReceive(uint8_t UARTn)
+ 224          {
+ 225   1        if(UARTn == UART0)
+ 226   1        {
+ 227   2          SCON0 &= ~(UART_SCON0_U0REN_Msk);
+ 228   2        }
+ 229   1        if(UARTn == UART1)
+ 230   1        {
+ 231   2          SCON1 &= ~(UART_SCON1_U1REN_Msk);
+ 232   2        } 
+ 233   1      }
+ 234          
+ 235          /******************************************************************************
+ 236           ** \brief UART_EnableInt
+ 237           **     开启中断
+ 238           ** \param [in]    UARTn: (1) UART0
+ 239           **             (2) UART1
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 5   
+
+ 240           ** \return 
+ 241          ******************************************************************************/
+ 242          void UART_EnableInt(uint8_t UARTn)
+ 243          {
+ 244   1        if(UARTn == UART0)
+ 245   1        {
+ 246   2          ES0 =1;
+ 247   2        }
+ 248   1        if(UARTn == UART1)
+ 249   1        {
+ 250   2          ES1 =1;
+ 251   2        }
+ 252   1      }
+ 253          /******************************************************************************
+ 254           ** \brief UART_DisableInt
+ 255           **     关闭中断
+ 256           ** \param [in]    UARTn: (1) UART0
+ 257           **             (2) UART1
+ 258           ** \return 
+ 259          ******************************************************************************/
+ 260          void UART_DisableInt(uint8_t UARTn)
+ 261          {
+ 262   1        if(UARTn == UART0)
+ 263   1        {
+ 264   2          ES0 =0;
+ 265   2        }
+ 266   1        if(UARTn == UART1)
+ 267   1        {
+ 268   2          ES1 =0;
+ 269   2        }
+ 270   1      }
+ 271          /******************************************************************************
+ 272           ** \brief UART_GetReceiveIntFlag
+ 273           **     获取接收中断标志位
+ 274           ** \param [in]    UARTn: (1) UART0
+ 275           **             (2) UART1
+ 276           ** \return 0：无中断，1：有中断
+ 277          ******************************************************************************/
+ 278          uint8_t  UART_GetReceiveIntFlag(uint8_t UARTn)
+ 279          {
+ 280   1        uint8_t uartFlag;
+ 281   1        uartFlag =0;
+ 282   1        if(UART0 ==  UARTn)
+ 283   1        {
+ 284   2          uartFlag =((SCON0 & UART_SCON0_RI0_Msk)? 1:0);
+ 285   2        }
+ 286   1        if(UART1 == UARTn)
+ 287   1        {
+ 288   2          uartFlag =((SCON1 & UART_SCON1_RI1_Msk)? 1:0);
+ 289   2        } 
+ 290   1        return uartFlag ;
+ 291   1      }
+ 292          
+ 293          /******************************************************************************
+ 294           ** \brief UART_ClearReceiveIntFlag
+ 295           **     清除接收中断标志位
+ 296           ** \param [in]    UARTn: (1) UART0
+ 297           **             (2) UART1
+ 298           ** \return 
+ 299          ******************************************************************************/
+ 300          void UART_ClearReceiveIntFlag(uint8_t UARTn)
+ 301          {
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 6   
+
+ 302   1        uint8_t temp; 
+ 303   1        if(UART0 ==  UARTn)
+ 304   1        {
+ 305   2          temp  = SCON0;
+ 306   2          temp &= ~(UART_SCON0_RI0_Msk);
+ 307   2          SCON0 = temp | UART_SCON0_TI0_Msk;
+ 308   2        }
+ 309   1        if(UART1 == UARTn)
+ 310   1        {
+ 311   2          temp  = SCON1;
+ 312   2          temp &= ~(UART_SCON1_RI1_Msk);
+ 313   2          SCON1 = temp | UART_SCON1_TI1_Msk;    
+ 314   2        }
+ 315   1      }
+ 316          
+ 317          /******************************************************************************
+ 318           ** \brief UART_GetSendIntFlag
+ 319           **     获取发送中断标志位
+ 320           ** \param [in]    UARTn: (1) UART0
+ 321           **             (2) UART1
+ 322           ** \return 0：无中断，1：有中断
+ 323          ******************************************************************************/
+ 324          uint8_t  UART_GetSendIntFlag(uint8_t UARTn)
+ 325          {
+ 326   1        uint8_t uartFlag;
+ 327   1        uartFlag =0;
+ 328   1        if(UART0 ==  UARTn)
+ 329   1        {
+ 330   2          return((SCON0 & UART_SCON0_TI0_Msk)? 1:0);
+ 331   2        }
+ 332   1        if(UART1 ==  UARTn)
+ 333   1        {
+ 334   2          return((SCON1 & UART_SCON1_TI1_Msk)? 1:0);
+ 335   2        } 
+ 336   1        return uartFlag;
+ 337   1      }
+ 338          
+ 339          /******************************************************************************
+ 340           ** \brief UART_ClearSendIntFlag
+ 341           **     清除发送中断标志位
+ 342           ** \param [in]    UARTn: (1) UART0
+ 343           **             (2) UART1
+ 344           ** \return 
+ 345          ******************************************************************************/
+ 346          void UART_ClearSendIntFlag(uint8_t UARTn)
+ 347          {
+ 348   1        uint8_t temp;
+ 349   1        
+ 350   1        if(UART0 ==  UARTn)
+ 351   1        {
+ 352   2          temp  = SCON0;
+ 353   2          temp &= ~(UART_SCON0_TI0_Msk);
+ 354   2          SCON0 = temp | UART_SCON0_RI0_Msk;    
+ 355   2        }
+ 356   1        if(UART1 == UARTn)
+ 357   1        {
+ 358   2          temp  = SCON1;
+ 359   2          temp &= ~(UART_SCON1_TI1_Msk);
+ 360   2          SCON1 = temp | UART_SCON1_RI1_Msk;    
+ 361   2        } 
+ 362   1      }
+ 363          
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 7   
+
+ 364          /******************************************************************************
+ 365           ** \brief UART_GetBuff
+ 366           **     获取接收Buff的值
+ 367           ** \param [in]    UARTn: (1) UART0
+ 368           **             (2) UART1
+ 369           ** \return 
+ 370          ******************************************************************************/
+ 371          uint8_t UART_GetBuff(uint8_t UARTn)
+ 372          {
+ 373   1        uint8_t  uartbuf;
+ 374   1        uartbuf =0;
+ 375   1        if(UART0 == UARTn)
+ 376   1        {
+ 377   2          uartbuf = SBUF0;
+ 378   2        }
+ 379   1        if(UART1 ==  UARTn)
+ 380   1        {
+ 381   2          uartbuf = SBUF1;
+ 382   2        } 
+ 383   1        return uartbuf;
+ 384   1      }
+ 385          
+ 386          /******************************************************************************
+ 387           ** \brief UART_SendBuff
+ 388           **     发送数据到发送Buff
+ 389           ** \param [in]    UARTn: (1) UART0
+ 390           **             (2) UART1
+ 391           **          UARTSendValue : 发送的8位值
+ 392           ** \return 
+ 393          ******************************************************************************/
+ 394          void UART_SendBuff(uint8_t UARTn, uint8_t UARTSendValue)
+ 395          {
+ 396   1        if(UART0 == UARTn)
+ 397   1        {
+ 398   2          SBUF0 = UARTSendValue;
+ 399   2        }
+ 400   1        if(UART1 == UARTn)
+ 401   1        {
+ 402   2          SBUF1 = UARTSendValue;
+ 403   2        } 
+ 404   1      }
+ 405          
+ 406          /******************************************************************************
+ 407           ** \brief UART_SendNinthBit
+ 408           **     发送数据的第九位
+ 409           ** \param [in]    UARTn: (1) UART0
+ 410           **             (2) UART1
+ 411           **          UARTSendValue : 发送的第九位值
+ 412           ** \return 
+ 413          ******************************************************************************/
+ 414          void UART_SendNinthBit(uint8_t UARTn, uint8_t UARTSendValue)
+ 415          {
+ 416   1        if(UART0 == UARTn)
+ 417   1        {
+ 418   2          if(0 == UARTSendValue)
+ 419   2          {
+ 420   3            SCON0 &= ~(UART_SCON0_U0TB8_Msk);
+ 421   3          }
+ 422   2          else
+ 423   2          {
+ 424   3            SCON0 |= UART_SCON0_U0TB8_Msk;  
+ 425   3          }
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 8   
+
+ 426   2        }
+ 427   1        if(UART1 == UARTn)
+ 428   1        {
+ 429   2          if(0 == UARTSendValue)
+ 430   2          {
+ 431   3            SCON1 &= ~(UART_SCON1_U1TB8_Msk);
+ 432   3          }
+ 433   2          else 
+ 434   2          {
+ 435   3            SCON1 |= UART_SCON1_U1TB8_Msk;  
+ 436   3          }
+ 437   2        }   
+ 438   1      }
+ 439          /******************************************************************************
+ 440           ** \brief UART_GetNinthBit
+ 441           **     获取数据的第九位
+ 442           ** \param [in]    UARTn: (1) UART0
+ 443           **             (2) UART1
+ 444           ** \return 0/1
+ 445          ******************************************************************************/
+ 446          uint8_t UART_GetNinthBit(uint8_t UARTn)
+ 447          {
+ 448   1        uint8_t ninthbit;
+ 449   1        ninthbit=0;
+ 450   1        if(UARTn == UART0)
+ 451   1        {
+ 452   2          ninthbit= ((SCON0 & UART_SCON0_U0RB8_Msk)? 1:0);
+ 453   2        }
+ 454   1        if(UARTn == UART1)
+ 455   1        {
+ 456   2          ninthbit= ((SCON1 & UART_SCON1_U1RB8_Msk)? 1:0);
+ 457   2        }
+ 458   1        return ninthbit;
+ 459   1      }
+ 460          
+ 461          /******************************************************************************
+ 462           ** \brief UART_EnableBRT
+ 463           **      使能BRT时钟模块
+ 464           ** \param [in]none
+ 465           ** \return none
+ 466          ******************************************************************************/
+ 467          void UART_EnableBRT(void)
+ 468          {
+ 469   1        BRTCON |= UART_BRTCON_BRTEN_Msk;  
+ 470   1      }
+ 471          /******************************************************************************
+ 472           ** \brief UART_ConfigBRTClk
+ 473           **      配置BRT模块时钟
+ 474           ** \param [in]BRTClkDiv : BRT_CLK_DIV_1 ~ BRT_CLK_DIV_128
+ 475           ** \return none
+ 476          ******************************************************************************/
+ 477          void UART_ConfigBRTClk( uint8_t BRTClkDiv)
+ 478          {
+ 479   1        BRTCON &= ~(UART_BRTCON_BRTCKDIV_Msk);  
+ 480   1        BRTCON |= BRTClkDiv;      
+ 481   1      }
+ 482          
+ 483          /******************************************************************************
+ 484           ** \brief UART_ConfigBRTPeriod
+ 485           **      配置BRT模块时钟周期
+ 486           ** \param [in] BRTPeriod: 16bit
+ 487           ** \return none
+C51 COMPILER V9.59.0.0   UART                                                              06/27/2023 19:17:32 PAGE 9   
+
+ 488          ******************************************************************************/
+ 489          void UART_ConfigBRTPeriod( uint16_t BRTPeriod)
+ 490          { 
+ 491   1        BRTDL = BRTPeriod;
+ 492   1        BRTDH = BRTPeriod>>8; 
+ 493   1      }
+ 494          /******************************************************************************
+ 495           ** \brief UART_DisableBRT
+ 496           **      关闭BRT时钟模块
+ 497           ** \param [in]none
+ 498           ** \return none
+ 499          ******************************************************************************/
+ 500          void UART_DisableBRT(void)
+ 501          {
+ 502   1        BRTCON &= ~(UART_BRTCON_BRTEN_Msk);
+ 503   1      }
+ 504          
+ 505          
+ 506          
+ 507          
+ 508          
+ 509          
+ 510          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    459    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

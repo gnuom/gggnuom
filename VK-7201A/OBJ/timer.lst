@@ -1,0 +1,990 @@
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE TIMER
+OBJECT MODULE PLACED IN ..\OBJ\timer.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\FWLib\src\timer.c OMF2 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\CORE;..\FWL
+                    -ib\inc;..\SYSTEM;..\USER\app;..\TOUCHLib;..\USER\driver;..\USER\event;..\USER\mid) DEBUG PRINT(..\OBJ\timer.lst) TABS(2)
+                    - OBJECT(..\OBJ\timer.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * Copyright (C) 2019 China Micro Semiconductor Limited Company. All Rights Reserved.
+   3          *
+   4          * This software is owned and published by:
+   5          * CMS LLC, No 2609-10, Taurus Plaza, TaoyuanRoad, NanshanDistrict, Shenzhen, China.
+   6          *
+   7          * BY DOWNLOADING, INSTALLING OR USING THIS SOFTWARE, YOU AGREE TO BE BOUND
+   8          * BY ALL THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+   9          *
+  10          * This software contains source code for use with CMS
+  11          * components. This software is licensed by CMS to be adapted only
+  12          * for use in systems utilizing CMS components. CMS shall not be
+  13          * responsible for misuse or illegal use of this software for devices not
+  14          * supported herein. CMS is providing this software "AS IS" and will
+  15          * not be responsible for issues arising from incorrect user implementation
+  16          * of the software.
+  17          *
+  18          * This software may be replicated in part or whole for the licensed use,
+  19          * with the restriction that this Disclaimer and Copyright notice must be
+  20          * included with each copy of this software, whether used in part or whole,
+  21          * at all times.
+  22          */
+  23          
+  24          /****************************************************************************/
+  25          /** \file timer.c
+  26          **
+  27          **  
+  28          **
+  29          **  History:
+  30          **  
+  31          ****************************************************************************/
+  32          /***************************************************************************/
+  33          /*  include files
+  34          ****************************************************************************/
+  35          #include "timer.h"
+  36          
+  37          /***************************************************************************/
+  38          /*  Local pre-processor symbols/macros('#define')
+  39          ****************************************************************************/
+  40          
+  41          /***************************************************************************/
+  42          /*  Global variable definitions(declared in header file with 'extern')
+  43          ****************************************************************************/
+  44          
+  45          /***************************************************************************/
+  46          /*  Local type definitions('typedef')
+  47          ****************************************************************************/
+  48          
+  49          /***************************************************************************/
+  50          /*  Local variable  definitions('static')
+  51          ****************************************************************************/
+  52          
+  53          /***************************************************************************/
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 2   
+
+  54          /*  Local function prototypes('static')
+  55          ****************************************************************************/
+  56          
+  57          /***************************************************************************/
+  58          /*  Function implementation - global ('extern') and local('static')
+  59          ****************************************************************************/
+  60          /****************************************************************************
+  61           ** \brief  TMR_ConfigRunMode
+  62           **     配置定时器运行模式
+  63           ** \param [in] Timern  ：   TMR0,TMR1,TMR3,TMR4
+  64           **       TimerMode   ：(1)TMR_MODE_TIMING :定时模式
+  65           **               (2)TMR_MODE_COUNT   :计数模式
+  66           **       TimerModeBranch ：模式的分支
+  67           **               (1)TMR_TIM_13BIT  :13位定时/计数模式
+  68           **               (2)TMR_TIM_16BIT  :16位定时/计数模式   
+  69           **               (3)TMR_TIM_AUTO_8BIT :8位自动重载定时/计数模式
+  70           **               (4)TMR_TIM_TWO_INDEPENDENT_8BIT :两个独立的8位定时/计数模式
+  71           ** \return  none
+  72           ** \note    此函数不支持TMR2
+  73           *****************************************************************************/
+  74          void TMR_ConfigRunMode(uint8_t Timern, uint8_t TimerMode, uint8_t TimerModeBranch)
+  75          {
+  76   1        switch (Timern)
+  77   1        {
+  78   2          case TMR0:
+  79   2            TMOD &= ~(TMR_TMOD_T0Mn_Msk | TMR_TMOD_CT0_Msk);
+  80   2            TMOD |= (TimerMode<< TMR_TMOD_CT0_Pos) | TimerModeBranch;
+  81   2            break;
+  82   2          case TMR1:
+  83   2            TMOD &= ~(TMR_TMOD_T1Mn_Msk | TMR_TMOD_CT1_Msk);
+  84   2            TMOD |= (TimerMode<< TMR_TMOD_CT1_Pos) | (TimerModeBranch<< TMR_TMOD_T1Mn_Pos);
+  85   2            break;  
+  86   2          case TMR3:
+  87   2            T34MOD &= ~(TMR_T34MOD_T3Mn_Msk);
+  88   2            T34MOD |= TimerModeBranch;
+  89   2            break;
+  90   2          case TMR4:
+  91   2            T34MOD &= ~(TMR_T34MOD_T4Mn_Msk);
+  92   2            T34MOD |= (TimerModeBranch<< TMR_T34MOD_T4Mn_Pos);  
+  93   2            break;  
+  94   2          default:
+  95   2            break;
+  96   2        }   
+  97   1      }
+  98          /***************************************************************************
+  99           ** \brief  TMR_ConfigTimerClk
+ 100           **     配置定时器运行时钟
+ 101           ** \param [in] Timern  ：   TMR0,TMR1,TMR3,TMR4
+ 102           **       TimerClkDiv ：(1)TMR_CLK_DIV_4 
+ 103           **               (2)TMR_CLK_DIV_12
+ 104           ** \return  none
+ 105           ** \note   
+ 106          *****************************************************************************/
+ 107          void TMR_ConfigTimerClk(uint8_t Timern,uint8_t TimerClkDiv)
+ 108          {
+ 109   1        switch (Timern)
+ 110   1        {
+ 111   2          case TMR0:
+ 112   2            CKCON &= ~(TMR_CKCON_T0M_Msk);
+ 113   2            CKCON |= (TimerClkDiv << TMR_CKCON_T0M_Pos);
+ 114   2            break;
+ 115   2          case TMR1:
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 3   
+
+ 116   2            CKCON &= ~(TMR_CKCON_T1M_Msk);
+ 117   2            CKCON |= (TimerClkDiv << TMR_CKCON_T1M_Pos);
+ 118   2            break;  
+ 119   2          case TMR3:
+ 120   2            T34MOD &= ~(TMR_T34MOD_T3M_Msk);
+ 121   2            T34MOD |= (TimerClkDiv << TMR_T34MOD_T3M_Pos);
+ 122   2            break;
+ 123   2          case TMR4:
+ 124   2            T34MOD &= ~(TMR_T34MOD_T4M_Msk);
+ 125   2            T34MOD |= (TimerClkDiv << TMR_T34MOD_T4M_Pos);
+ 126   2            break;  
+ 127   2          default:
+ 128   2            break;
+ 129   2        } 
+ 130   1      }
+ 131          /***************************************************************************
+ 132           ** \brief  TMR_ConfigTimerPeriod
+ 133           **     配置定时器定时周期
+ 134           ** \param [in] Timern  ：   TMR0,TMR1,TMR3,TMR4
+ 135           **       TimerPeriodH:(1)TH0 (2)TH1 (3)TH3 (4)TH4
+ 136           **       TimerPeriodL:(1)TL0 (2)TL1 (3)TL3 (4)TL4
+ 137           ** \return  none
+ 138           ** \note    13位定时器 ：THx[7:0],TLx[4:0]
+ 139          *****************************************************************************/
+ 140          void TMR_ConfigTimerPeriod(uint8_t Timern , uint8_t TimerPeriodHigh, uint8_t TimerPeriodLow)
+ 141          {
+ 142   1        switch (Timern)
+ 143   1        {
+ 144   2          case TMR0:
+ 145   2            TH0 = TimerPeriodHigh;
+ 146   2            TL0 = TimerPeriodLow;
+ 147   2            break;
+ 148   2          case TMR1:
+ 149   2            TH1 = TimerPeriodHigh;
+ 150   2            TL1 = TimerPeriodLow;
+ 151   2            break;  
+ 152   2          case TMR3:
+ 153   2            TH3 = TimerPeriodHigh;
+ 154   2            TL3 = TimerPeriodLow;
+ 155   2            break;
+ 156   2          case TMR4:
+ 157   2            TH4 = TimerPeriodHigh;
+ 158   2            TL4 = TimerPeriodLow;
+ 159   2            break;  
+ 160   2          default:
+ 161   2            break;
+ 162   2        }   
+ 163   1      }
+ 164          
+ 165          /*****************************************************************************
+ 166           ** \brief  TMR_EnableGATE
+ 167           **     使能定时器门控功能
+ 168           ** \param [in] Timern  ： TMR0,TMR1
+ 169           ** \return  none
+ 170           ** \note   
+ 171           *****************************************************************************/
+ 172          void TMR_EnableGATE(uint8_t Timern)
+ 173          {
+ 174   1        if(TMR0 == Timern)
+ 175   1        {
+ 176   2          TMOD |= TMR_TMOD_GATE0_Msk;
+ 177   2        }
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 4   
+
+ 178   1        if(TMR1 == Timern)
+ 179   1        {
+ 180   2          TMOD |= TMR_TMOD_GATE1_Msk;
+ 181   2        }
+ 182   1      }
+ 183          /*****************************************************************************
+ 184           ** \brief  TMR_DisableGATE
+ 185           **     关闭定时器门控
+ 186           ** \param [in] Timern  ： TMR0,TMR1
+ 187           ** \return  none
+ 188           ** \note   
+ 189           *****************************************************************************/
+ 190          void TMR_DisableGATE(uint8_t Timern)
+ 191          {
+ 192   1        if(TMR0 == Timern)
+ 193   1        {
+ 194   2          TMOD &= ~(TMR_TMOD_GATE0_Msk);
+ 195   2        }
+ 196   1        if(TMR1 == Timern)
+ 197   1        {
+ 198   2          TMOD &= ~(TMR_TMOD_GATE1_Msk);
+ 199   2        }
+ 200   1      }
+ 201          /*****************************************************************************
+ 202           ** \brief  TMR_GetCountValue
+ 203           **     获取定时器计数模式的计数值
+ 204           ** \param [in] Timern  ： TMR0,TMR1
+ 205           ** \return  16bits的计数值：[THn:TLn]
+ 206           ** \note   模式2/3: 请酌情使用
+ 207           *****************************************************************************/
+ 208          uint16_t  TMR_GetCountValue(uint8_t Timern)
+ 209          {
+ 210   1        if( TMR0 == Timern)
+ 211   1        { 
+ 212   2          if( TMR_TIM_13BIT == (TMOD & TMR_TMOD_T0Mn_Msk))
+ 213   2          {
+ 214   3            return(((TH0<< 5) | TL0));
+ 215   3          }
+ 216   2          return(((TH0<< 8) | TL0));    
+ 217   2        } 
+ 218   1        if( TMR1 == Timern)
+ 219   1        {
+ 220   2          if( TMR_TIM_13BIT == (TMOD & TMR_TMOD_T1Mn_Msk))
+ 221   2          {
+ 222   3            return(((TH1<< 5) | TL1));    
+ 223   3          }
+ 224   2          return(((TH1<< 8) | TL1));      
+ 225   2        }
+ 226   1        return 0;
+ 227   1      }
+ 228          
+ 229          /*****************************************************************************
+ 230           ** \brief  TMR_EnableOverflowInt
+ 231           **     使能定时器溢出中断
+ 232           ** \param [in] Timern  ： TMR0,TMR1,TMR3,TMR4
+ 233           ** \return   none
+ 234           ** \note   
+ 235           *****************************************************************************/
+ 236          void  TMR_EnableOverflowInt(uint8_t Timern)
+ 237          {
+ 238   1        switch (Timern)
+ 239   1        {
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 5   
+
+ 240   2          case TMR0:
+ 241   2            ET0 = 1;
+ 242   2            break;
+ 243   2          case TMR1:
+ 244   2            ET1 = 1;
+ 245   2            break;  
+ 246   2          case TMR3:
+ 247   2            EIE2 |= IRQ_EIE2_ET3IE_Msk;
+ 248   2            break;
+ 249   2          case TMR4:
+ 250   2            EIE2 |= IRQ_EIE2_ET4IE_Msk;
+ 251   2            break;  
+ 252   2          default:
+ 253   2            break;
+ 254   2        }   
+ 255   1      }
+ 256          
+ 257          /*****************************************************************************
+ 258           ** \brief  TMR_DisableOverflowInt
+ 259           **     关闭定时器溢出中断
+ 260           ** \param [in] Timern  ： TMR0,TMR1,TMR3,TMR4
+ 261           ** \return   none
+ 262           ** \note   
+ 263           *****************************************************************************/
+ 264          void  TMR_DisableOverflowInt(uint8_t Timern)
+ 265          {
+ 266   1        switch (Timern)
+ 267   1        {
+ 268   2          case TMR0:
+ 269   2            ET0 = 0;
+ 270   2            break;
+ 271   2          case TMR1:
+ 272   2            ET1 = 0;
+ 273   2            break;  
+ 274   2          case TMR3:
+ 275   2            EIE2 &= ~(IRQ_EIE2_ET3IE_Msk);
+ 276   2            break;
+ 277   2          case TMR4:
+ 278   2            EIE2 &= ~(IRQ_EIE2_ET4IE_Msk);
+ 279   2            break;  
+ 280   2          default:
+ 281   2            break;
+ 282   2        } 
+ 283   1      }
+ 284          /*****************************************************************************
+ 285           ** \brief  TMR_GetOverflowIntFlag
+ 286           **     获取定时器中断标志
+ 287           ** \param [in] Timern  ： TMR0,TMR1,TMR3,TMR4
+ 288           ** \return   0：无中断， 1：有中断
+ 289           ** \note   定时器0、3使用模式3时，其中TLn的溢出中断使用TMR0、3中断标志
+ 290           **                    THn的溢出中断使用TMR1、4中断标志 
+ 291           *****************************************************************************/
+ 292          uint8_t TMR_GetOverflowIntFlag(uint8_t Timern)
+ 293          {
+ 294   1        uint8_t IntFlag =0;
+ 295   1        switch (Timern)
+ 296   1        {
+ 297   2          case TMR0:
+ 298   2            IntFlag = TCON & TMR_TCON_TF0_Msk;
+ 299   2            break;
+ 300   2          case TMR1:
+ 301   2            IntFlag = TCON & TMR_TCON_TF1_Msk;
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 6   
+
+ 302   2            break;  
+ 303   2          case TMR3:
+ 304   2            IntFlag = EIF2 & IRQ_EIF2_TF3_Msk;
+ 305   2            break;
+ 306   2          case TMR4:
+ 307   2            IntFlag = EIF2 & IRQ_EIF2_TF4_Msk;
+ 308   2            break;  
+ 309   2          default:
+ 310   2            break;
+ 311   2        }
+ 312   1        return (IntFlag ? 1:0);
+ 313   1      }
+ 314          /*****************************************************************************
+ 315           ** \brief  TMR_ClearOverflowIntFlag
+ 316           **     清除定时器溢出中断标志
+ 317           ** \param [in] Timern  ： TMR0,TMR1,TMR3,TMR4
+ 318           ** \return  none
+ 319           ** \note   
+ 320           *****************************************************************************/
+ 321          void  TMR_ClearOverflowIntFlag(uint8_t Timern)
+ 322          {
+ 323   1        switch (Timern)
+ 324   1        {
+ 325   2          case TMR0:
+ 326   2            TF0 = 0;
+ 327   2            break;
+ 328   2          case TMR1:
+ 329   2            TF1 = 0;
+ 330   2            break;  
+ 331   2          case TMR3:
+ 332   2            EIF2 = 0xFF & (~(IRQ_EIF2_TF3_Msk));
+ 333   2            break;
+ 334   2          case TMR4:
+ 335   2            EIF2 = 0xFF & (~(IRQ_EIF2_TF4_Msk));
+ 336   2            break;  
+ 337   2          default:
+ 338   2            break;
+ 339   2        } 
+ 340   1      }
+ 341          /*****************************************************************************
+ 342           ** \brief  TMR_Start
+ 343           **     开启定时器
+ 344           ** \param [in] Timern  ： TMR0,TMR1,TMR3,TMR4
+ 345           ** \return  none
+ 346           ** \note   
+ 347           *****************************************************************************/
+ 348          void TMR_Start(uint8_t Timern)
+ 349          {
+ 350   1        switch (Timern)
+ 351   1        {
+ 352   2          case TMR0:
+ 353   2            TR0 = 1;
+ 354   2            break;
+ 355   2          case TMR1:
+ 356   2            TR1 = 1;
+ 357   2            break;  
+ 358   2          case TMR3:
+ 359   2            T34MOD |= TMR_T34MOD_TR3_Msk;
+ 360   2            break;
+ 361   2          case TMR4:
+ 362   2            T34MOD |= TMR_T34MOD_TR4_Msk;
+ 363   2            break;  
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 7   
+
+ 364   2          default:
+ 365   2            break;
+ 366   2        }   
+ 367   1      }
+ 368          /*****************************************************************************
+ 369           ** \brief  TMR_Stop
+ 370           **     关闭定时器
+ 371           ** \param [in] Timern  ： TMR0,TMR1,TMR3,TMR4
+ 372           ** \return  none
+ 373           ** \note   
+ 374           *****************************************************************************/
+ 375          void TMR_Stop(uint8_t Timern)
+ 376          {
+ 377   1        switch (Timern)
+ 378   1        {
+ 379   2          case TMR0:
+ 380   2            TR0 =0;
+ 381   2            break;
+ 382   2          case TMR1:
+ 383   2            TR1 =0;
+ 384   2            break;  
+ 385   2          case TMR3:
+ 386   2            T34MOD &= ~(TMR_T34MOD_TR3_Msk);
+ 387   2            break;
+ 388   2          case TMR4:
+ 389   2            T34MOD &= ~(TMR_T34MOD_TR4_Msk);
+ 390   2            break;  
+ 391   2          default:
+ 392   2            break;
+ 393   2        }   
+ 394   1      }
+ 395          
+ 396          
+ 397          /****************************************************************************/
+ 398          /*****************************************************************************
+ 399           ** \brief  TMR2_ConfigRunMode
+ 400           **     配置Timer2运行模式
+ 401           ** \param [in] Timer2Mode  : (1)TMR2_MODE_TIMING :定时模式
+ 402           **               (2)TMR2_MODE_COUNT  :计数模式
+ 403           **        Timer2LoadMode ： 
+ 404           **               (1)TMR2_AUTO_LOAD :定时器2自动重载模式
+ 405           **               (2)TMR2_T2EX_LOAD :定时器2外部触发重载模式
+ 406          **                (3)TMR2_LOAD_DISBALE: 禁止重载
+ 407           ** \return  none
+ 408           ** \note    
+ 409          *****************************************************************************/
+ 410          void TMR2_ConfigRunMode(  uint8_t Timer2Mode, uint8_t Timer2LoadMode)
+ 411          {
+ 412   1        T2CON &= ~(TMR_T2CON_T2Rn_Msk | TMR_TMOD_T0Mn_Msk);
+ 413   1        T2CON |= Timer2Mode | Timer2LoadMode ;    
+ 414   1      }
+ 415          /*****************************************************************************
+ 416           ** \brief  TMR2_ConfigTimerClk
+ 417           **     配置定时器运行时钟
+ 418           ** \param [in] TimerClkDiv ：TMR2_CLK_DIV_12 、TMR2_CLK_DIV_24
+ 419           ** \return  none
+ 420           ** \note   
+ 421           *****************************************************************************/
+ 422          void TMR2_ConfigTimerClk(uint8_t TimerClkDiv)
+ 423          {
+ 424   1        T2CON &= ~(TMR_T2CON_T2PS_Msk);
+ 425   1        T2CON |= (TimerClkDiv);
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 8   
+
+ 426   1      }
+ 427          /***************************************************************************
+ 428           ** \brief  TMR2_ConfigTimerPeriod
+ 429           **     配置定时器2定时周期
+ 430           ** \param [in] TimerPeriod；定时器2定时周期
+ 431           ** \return  none
+ 432           ** \note   
+ 433          *****************************************************************************/
+ 434          void TMR2_ConfigTimerPeriod(uint16_t TimerPeriod)
+ 435          {
+ 436   1        TL2 = (uint8_t)TimerPeriod;
+ 437   1        TH2 = (uint8_t)(TimerPeriod >>8);
+ 438   1        if((TMR2_AUTO_LOAD == (T2CON & TMR_T2CON_T2Rn_Msk)) || (TMR2_T2EX_LOAD == (T2CON & TMR_T2CON_T2Rn_Msk)))
+ 439   1        {
+ 440   2          RLDL = (uint8_t)TimerPeriod;      //自动重载或T2EX下降沿加载
+ 441   2          RLDH = (uint8_t)(TimerPeriod >>8);    
+ 442   2        }
+ 443   1      }
+ 444          /*****************************************************************************
+ 445           ** \brief  TMR2_EnableGATE
+ 446           **     使能定时器2门控功能
+ 447           ** \param [in] none
+ 448           ** \return  none
+ 449           ** \note   
+ 450           *****************************************************************************/
+ 451          void TMR2_EnableGATE(void)
+ 452          {
+ 453   1        T2CON |= TMR_T2CON_T2In_Msk;
+ 454   1      }
+ 455          /*****************************************************************************
+ 456           ** \brief  TMR2_DisableGATE
+ 457           **     关闭定时器2门控功能
+ 458           ** \param [in] none
+ 459           ** \return  none
+ 460           ** \note   
+ 461           *****************************************************************************/
+ 462          void TMR2_DisableGATE(void)
+ 463          {
+ 464   1        T2CON &= ~(TMR_T2CON_T2In_Msk); 
+ 465   1        T2CON |= (0x1 << TMR_T2CON_T2In_Pos);
+ 466   1      }
+ 467          
+ 468          /*****************************************************************************
+ 469           ** \brief  TMR2_EnableCompare
+ 470           **     使能比较模式
+ 471           ** \param [in] Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 472           **       CompareMode :(1)TMR2_CMP_MODE_0
+ 473           **              (2)TMR2_CMP_MODE_1
+ 474           ** \return  none
+ 475           ** \note   
+ 476           *****************************************************************************/
+ 477          void TMR2_EnableCompare(uint8_t Timer2CCn, uint8_t CompareMode)
+ 478          {
+ 479   1        if(TMR2_CMP_MODE_0 == CompareMode)
+ 480   1        {
+ 481   2          T2CM = 0;
+ 482   2        }
+ 483   1        if(TMR2_CMP_MODE_1 == CompareMode)
+ 484   1        {
+ 485   2          T2CM = 1;
+ 486   2        } 
+ 487   1        if( Timer2CCn == TMR2_CC0)
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 9   
+
+ 488   1        {
+ 489   2          CCEN &= ~(TMR_CCEN_CMn0_Msk);
+ 490   2          CCEN |= (TMR2_MODE_COMPARE << TMR_CCEN_CMn0_Pos);
+ 491   2        }
+ 492   1        if( Timer2CCn == TMR2_CC1)
+ 493   1        {
+ 494   2          CCEN &= ~(TMR_CCEN_CMn1_Msk);
+ 495   2          CCEN |= (TMR2_MODE_COMPARE << TMR_CCEN_CMn1_Pos);
+ 496   2        }
+ 497   1        if( Timer2CCn == TMR2_CC2)
+ 498   1        {
+ 499   2          CCEN &= ~(TMR_CCEN_CMn2_Msk);
+ 500   2          CCEN |= (TMR2_MODE_COMPARE << TMR_CCEN_CMn2_Pos); 
+ 501   2        }
+ 502   1        if( Timer2CCn == TMR2_CC3)
+ 503   1        {
+ 504   2          CCEN &= ~(TMR_CCEN_CMn3_Msk);
+ 505   2          CCEN |= (TMR2_MODE_COMPARE << TMR_CCEN_CMn3_Pos); 
+ 506   2        }     
+ 507   1      }
+ 508          /*****************************************************************************
+ 509           ** \brief  TMR2_DisableCompare
+ 510           **     关闭比较模式
+ 511           ** \param [in] Timer2CCMask:  TMR2_CC0 ~ TMR2_CC3
+ 512           ** \return  none
+ 513           ** \note   
+ 514           *****************************************************************************/
+ 515          void TMR2_DisableCompare(uint8_t Timer2CCn)
+ 516          {
+ 517   1        if( Timer2CCn == TMR2_CC0)
+ 518   1        {
+ 519   2          CCEN &= ~(TMR_CCEN_CMn0_Msk);
+ 520   2        }
+ 521   1        if( Timer2CCn == TMR2_CC1)
+ 522   1        {
+ 523   2          CCEN &= ~(TMR_CCEN_CMn1_Msk);
+ 524   2        }
+ 525   1        if( Timer2CCn == TMR2_CC2)
+ 526   1        {
+ 527   2          CCEN &= ~(TMR_CCEN_CMn2_Msk);
+ 528   2        }
+ 529   1        if( Timer2CCn == TMR2_CC3)
+ 530   1        {
+ 531   2          CCEN &= ~(TMR_CCEN_CMn3_Msk);
+ 532   2        }     
+ 533   1      }
+ 534          
+ 535          /*****************************************************************************
+ 536           ** \brief  TMR2_ConfigCompareValue
+ 537           **     配置比较通道比较值
+ 538           ** \param [in] Timer2CCMask:  TMR2_CC0 ~ TMR2_CC3
+ 539           **       CompareValue:  0x0 ~ 0xFFFF;
+ 540           ** \return  none
+ 541           ** \note   
+ 542           *****************************************************************************/
+ 543          void TMR2_ConfigCompareValue(uint8_t Timer2CCn, uint16_t CompareValue)
+ 544          {
+ 545   1        if( TMR2_CC0 == Timer2CCn)
+ 546   1        {
+ 547   2          RLDL = (uint8_t)CompareValue;
+ 548   2          RLDH = (uint8_t)(CompareValue >>8);
+ 549   2        }
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 10  
+
+ 550   1        if( TMR2_CC1 == Timer2CCn)
+ 551   1        {
+ 552   2          CCL1 = (uint8_t)CompareValue;
+ 553   2          CCH1 = (uint8_t)(CompareValue >>8); 
+ 554   2        }
+ 555   1        if( TMR2_CC2 == Timer2CCn)
+ 556   1        {
+ 557   2          CCL2 = (uint8_t)CompareValue;
+ 558   2          CCH2 = (uint8_t)(CompareValue >>8);   
+ 559   2        }
+ 560   1        if( TMR2_CC3 == Timer2CCn)
+ 561   1        {
+ 562   2          CCL3 = (uint8_t)CompareValue;
+ 563   2          CCH3 = (uint8_t)(CompareValue >>8);   
+ 564   2        }
+ 565   1      }
+ 566          /*****************************************************************************
+ 567           ** \brief  TMR2_ConfigCompareIntMode
+ 568           **     配置比较通道比较中断模式
+ 569           ** \param [in] Timer2CompareIntMode: (1)TMR2_CMP_INT_MODE0   
+ 570           **                   (2)TMR2_CMP_INT_MODE1   
+ 571           ** \return  none
+ 572           ** \note   
+ 573           **            
+ 574           *****************************************************************************/
+ 575          void TMR2_ConfigCompareIntMode(uint8_t Timer2CompareIntMode)
+ 576          {
+ 577   1        T2CON &= ~(TMR_T2CON_I3FR_Msk);
+ 578   1        T2CON |= Timer2CompareIntMode;
+ 579   1      }
+ 580          
+ 581          /*****************************************************************************/
+ 582          /*****************************************************************************/
+ 583          /*****************************************************************************
+ 584           ** \brief  TMR2_EnableCapture
+ 585           **     使能捕获模式
+ 586           ** \param [in] Timer2CCMask:  TMR2_CC0 ~ TMR2_CC3
+ 587           **       Timer2CaptureMode: (1)TMR2_CAP_WRITE_REGISTER   捕获通道在写寄存器时捕获
+ 588           **                  (2)TMR2_CAP_EDGE_FALLING   捕获通道下降沿捕获         
+ 589           **                  (3)TMR2_CAP_EDGE_RISING    捕获通道上升沿捕获
+ 590           **                  (4)TMR2_CAP_EDGE_BOTH    捕获通道在上升和下降边沿都可捕获                 
+ 591           ** \return  none
+ 592           ** \note  
+ 593           *****************************************************************************/
+ 594          void TMR2_EnableCapture(uint8_t Timer2CCn, uint8_t Timer2CaptureMode)
+ 595          {
+ 596   1        if( TMR2_CC0 == Timer2CCn)
+ 597   1        {
+ 598   2          T2CON &= ~(TMR_T2CON_I3FR_Msk);
+ 599   2          T2CON |= ( (0x1 & Timer2CaptureMode)<<TMR_T2CON_I3FR_Pos);    
+ 600   2          CCEN &= ~(TMR_CCEN_CMn0_Msk);
+ 601   2          CCEN |= ( (0x1 | Timer2CaptureMode)<< TMR_CCEN_CMn0_Pos);
+ 602   2        }
+ 603   1        if( TMR2_CC1 == Timer2CCn)
+ 604   1        {
+ 605   2          T2CON &= ~(TMR_T2CON_CAPES_Msk);
+ 606   2          if(TMR2_CAP_EDGE_FALLING == Timer2CaptureMode)
+ 607   2          {
+ 608   3            T2CON |= ( (0x1)<<TMR_T2CON_CAPES_Pos);     
+ 609   3          } 
+ 610   2          CCEN &= ~(TMR_CCEN_CMn1_Msk);
+ 611   2          CCEN |= ((0x1 | Timer2CaptureMode)<< TMR_CCEN_CMn1_Pos);
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 11  
+
+ 612   2          
+ 613   2        }
+ 614   1        if( TMR2_CC2 == Timer2CCn)
+ 615   1        {
+ 616   2          T2CON &= ~(TMR_T2CON_CAPES_Msk);
+ 617   2          if(TMR2_CAP_EDGE_FALLING == Timer2CaptureMode)
+ 618   2          {
+ 619   3            T2CON |= ( (0x1)<<TMR_T2CON_CAPES_Pos);     
+ 620   3          }   
+ 621   2          CCEN &= ~(TMR_CCEN_CMn2_Msk);
+ 622   2          CCEN |= ((0x1 | Timer2CaptureMode)<< TMR_CCEN_CMn2_Pos);  
+ 623   2        }
+ 624   1        if( TMR2_CC3 == Timer2CCn)
+ 625   1        {
+ 626   2          T2CON &= ~(TMR_T2CON_CAPES_Msk);
+ 627   2          if(TMR2_CAP_EDGE_FALLING == Timer2CaptureMode)
+ 628   2          {
+ 629   3            T2CON |= ( (0x1)<<TMR_T2CON_CAPES_Pos);     
+ 630   3          }     
+ 631   2          CCEN &= ~(TMR_CCEN_CMn3_Msk);
+ 632   2          CCEN |= ((0x1 | Timer2CaptureMode)<< TMR_CCEN_CMn3_Pos);  
+ 633   2        } 
+ 634   1      }
+ 635          
+ 636          /*****************************************************************************
+ 637           ** \brief  TMR2_DisableCapture
+ 638           **     关闭捕获模式
+ 639           ** \param [in] Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 640           ** \return  none
+ 641           ** \note   
+ 642          *****************************************************************************/
+ 643          void TMR2_DisableCapture(uint8_t Timer2CCn)
+ 644          {
+ 645   1        if( Timer2CCn == TMR2_CC0)
+ 646   1        {
+ 647   2          CCEN &= ~(TMR_CCEN_CMn0_Msk);
+ 648   2        }
+ 649   1        if( Timer2CCn == TMR2_CC1)
+ 650   1        {
+ 651   2          CCEN &= ~(TMR_CCEN_CMn1_Msk);
+ 652   2        }
+ 653   1        if( Timer2CCn == TMR2_CC2)
+ 654   1        {
+ 655   2          CCEN &= ~(TMR_CCEN_CMn2_Msk);
+ 656   2        }
+ 657   1        if( Timer2CCn == TMR2_CC3)
+ 658   1        {
+ 659   2          CCEN &= ~(TMR_CCEN_CMn3_Msk);
+ 660   2        } 
+ 661   1      }
+ 662          
+ 663          /*****************************************************************************
+ 664           ** \brief  TMR2_GetCaptureValue
+ 665           **     获取捕获值
+ 666           ** \param [in] Timer2CCn:  TMR2_CC0 ~ TMR2_CC3     
+ 667           ** \return  16bit value
+ 668           ** \note   
+ 669           *****************************************************************************/
+ 670          uint16_t TMR2_GetCaptureValue(uint8_t Timer2CCn)
+ 671          {
+ 672   1        uint16_t  CaputerValue = 0;
+ 673   1        switch(Timer2CCn)
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 12  
+
+ 674   1        {
+ 675   2          case TMR2_CC0:
+ 676   2            CaputerValue = RLDH;
+ 677   2            CaputerValue = (CaputerValue <<8) | RLDL;
+ 678   2            break;
+ 679   2          case TMR2_CC1:
+ 680   2            CaputerValue = CCH1;
+ 681   2            CaputerValue = (CaputerValue <<8) | CCL1;
+ 682   2            break;  
+ 683   2          case TMR2_CC2:
+ 684   2            CaputerValue = CCH2;
+ 685   2            CaputerValue = (CaputerValue <<8) | CCL2;
+ 686   2            break;    
+ 687   2          case TMR2_CC3:
+ 688   2            CaputerValue = CCH3;
+ 689   2            CaputerValue = (CaputerValue <<8) | CCL3;
+ 690   2            break;  
+ 691   2          default:
+ 692   2            break;
+ 693   2        }   
+ 694   1        return CaputerValue;  
+ 695   1      }
+ 696          
+ 697          /*****************************************************************************
+ 698           ** \brief  TMR2_EnableOverflowInt
+ 699           **     使能定时器2溢出中断
+ 700           ** \param [in] none
+ 701           ** \return   none
+ 702           ** \note   
+ 703           *****************************************************************************/
+ 704          void TMR2_EnableOverflowInt(void)
+ 705          {
+ 706   1        T2IE |= IRQ_T2IE_T2OVIE_Msk;
+ 707   1      }
+ 708          
+ 709          /*****************************************************************************
+ 710           ** \brief  TMR2_DisableOverflowInt
+ 711           **     关闭定时器2溢出中断
+ 712           ** \param [in] none
+ 713           ** \return   none
+ 714           ** \note   
+ 715           *****************************************************************************/
+ 716          void TMR2_DisableOverflowInt(void)
+ 717          {
+ 718   1        T2IE &= ~(IRQ_T2IE_T2OVIE_Msk);
+ 719   1      }
+ 720          
+ 721          /*****************************************************************************
+ 722           ** \brief  TMR2_GetOverflowIntFlag
+ 723           **     获取定时器2溢出中断标志
+ 724           ** \param [in] none
+ 725           ** \return   0：无中断， 1：有中断
+ 726           ** \note   
+ 727           *****************************************************************************/
+ 728          uint8_t TMR2_GetOverflowIntFlag(void)
+ 729          {
+ 730   1        return((T2IF & IRQ_T2IF_T2F_Msk)? 1:0);
+ 731   1      }
+ 732          /*****************************************************************************
+ 733           ** \brief  TMR2_ClearOverflowIntFlag
+ 734           **     清除定时器2溢出中断标志
+ 735           ** \param [in] none
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 13  
+
+ 736           ** \return   none
+ 737           ** \note   
+ 738           *****************************************************************************/
+ 739          void TMR2_ClearOverflowIntFlag(void)
+ 740          {
+ 741   1        T2IF =  0xff & (~(IRQ_T2IF_T2F_Msk));
+ 742   1      }
+ 743          
+ 744          /*****************************************************************************
+ 745           ** \brief  TMR2_EnableT2EXInt
+ 746           **     使能定时器2外部加载T2EX中断
+ 747           ** \param [in] none
+ 748           ** \return   none
+ 749           ** \note   
+ 750           *****************************************************************************/
+ 751          void TMR2_EnableT2EXInt(void)
+ 752          {
+ 753   1        T2IE |= IRQ_T2IE_T2EXIE_Msk;
+ 754   1      }
+ 755          
+ 756          /*****************************************************************************
+ 757           ** \brief  TMR2_DisableT2EXInt
+ 758           **     关闭定时器2外部加载T2EX中断
+ 759           ** \param [in] none
+ 760           ** \return   none
+ 761           ** \note   
+ 762           *****************************************************************************/
+ 763          void TMR2_DisableT2EXInt(void)
+ 764          {
+ 765   1        T2IE &= ~(IRQ_T2IE_T2EXIE_Msk);
+ 766   1      }
+ 767          /*****************************************************************************
+ 768           ** \brief  TMR_GetT2EXIntFlag
+ 769           **     获取定时器2外部加载T2EX中断标志
+ 770           ** \param [in] none
+ 771           ** \return   0：无中断， 1：有中断
+ 772           ** \note   
+ 773           *****************************************************************************/
+ 774          uint8_t TMR2_GetT2EXIntFlag(void)
+ 775          {
+ 776   1        return((T2IF & IRQ_T2IF_T2EXIF_Msk)? 1:0);
+ 777   1      }
+ 778          
+ 779          /*****************************************************************************
+ 780           ** \brief  TMR2_ClearT2EXIntFlag
+ 781           **     清除定时器2外部加载T2EX中断标志
+ 782           ** \param [in] none
+ 783           ** \return   none
+ 784           ** \note   
+ 785           *****************************************************************************/
+ 786          void TMR2_ClearT2EXIntFlag(void)
+ 787          {
+ 788   1        T2IF =  0xff & (~(IRQ_T2IF_T2EXIF_Msk));
+ 789   1      }
+ 790          
+ 791          /*****************************************************************************
+ 792           ** \brief  TMR2_EnableCompareInt
+ 793           **     使能定时器2通道比较中断
+ 794           ** \param [in]Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 795           ** \return   none
+ 796           ** \note   
+ 797           *****************************************************************************/
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 14  
+
+ 798          void TMR2_EnableCompareInt(uint8_t Timer2CCn)
+ 799          {
+ 800   1        T2IE |= (0x1<<Timer2CCn);
+ 801   1      }
+ 802          
+ 803          /*****************************************************************************
+ 804           ** \brief  TMR2_DisableCompareInt
+ 805           **     关闭定时器2通道比较中断
+ 806           ** \param [in] Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 807           ** \return   none
+ 808           ** \note   
+ 809           *****************************************************************************/
+ 810          void TMR2_DisableCompareInt(uint8_t Timer2CCn)
+ 811          {
+ 812   1        T2IE &= ~(0x1<<Timer2CCn);
+ 813   1      }
+ 814          
+ 815          /*****************************************************************************
+ 816           ** \brief  TMR2_GetCompareIntFlag
+ 817           **     获取定时器2通道比较中断标志
+ 818           ** \param [in]Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 819           ** \return   0：无中断， 1：有中断
+ 820           ** \note   
+ 821           *****************************************************************************/
+ 822          uint8_t TMR2_GetCompareIntFlag(uint8_t Timer2CCn)
+ 823          {
+ 824   1        return ((T2IF & (0x1<< Timer2CCn))? 1:0);
+ 825   1      }
+ 826          /*****************************************************************************
+ 827           ** \brief  TMR2_ClearCompareIntFlag
+ 828           **     清除定时器2通道比较中断标志
+ 829           ** \param [in]Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 830           ** \return   none
+ 831           ** \note   
+ 832           *****************************************************************************/
+ 833          void TMR2_ClearCompareIntFlag(uint8_t Timer2CCn)
+ 834          {
+ 835   1        T2IF = 0xff & (~(0x1<< Timer2CCn));
+ 836   1      }
+ 837          
+ 838          /*****************************************************************************
+ 839           ** \brief  TMR2_EnableCaptureInt
+ 840           **     使能定时器2通道捕获中断
+ 841           ** \param [in]Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 842           ** \return   none
+ 843           ** \note   
+ 844           *****************************************************************************/
+ 845          void TMR2_EnableCaptureInt(uint8_t Timer2CCn)
+ 846          {
+ 847   1        T2IE |= (0x1<<Timer2CCn);
+ 848   1      }
+ 849          /*****************************************************************************
+ 850           ** \brief  TMR2_DisableCaptureInt
+ 851           **     关闭定时器2通道捕获中断
+ 852           ** \param [in]Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 853           ** \return   none
+ 854           ** \note   
+ 855           *****************************************************************************/
+ 856          void TMR2_DisableCaptureInt(uint8_t Timer2CCn)
+ 857          {
+ 858   1        T2IE &= ~(0x1<<Timer2CCn);
+ 859   1      }
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 15  
+
+ 860          /*****************************************************************************
+ 861           ** \brief  TMR2_GetCaptureIntFlag
+ 862           **     获取定时器2通道捕获中断标志
+ 863           ** \param [in]Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 864           ** \return   0：无中断， 1：有中断
+ 865           ** \note   
+ 866           *****************************************************************************/
+ 867          uint8_t TMR2_GetCaptureIntFlag(uint8_t Timer2CCn)
+ 868          {
+ 869   1        return ((T2IF & (0x1<< Timer2CCn))? 1:0);
+ 870   1      }
+ 871          /*****************************************************************************
+ 872           ** \brief  TMR2_ClearCaptureIntFlag
+ 873           **     清除定时器2通道捕获中断标志
+ 874           ** \param [in]Timer2CCn:  TMR2_CC0 ~ TMR2_CC3
+ 875           ** \return   none
+ 876           ** \note   
+ 877           *****************************************************************************/
+ 878          void TMR2_ClearCaptureIntFlag(uint8_t Timer2CCn)
+ 879          {
+ 880   1        T2IF = 0xff & (~(0x1<< Timer2CCn));
+ 881   1      }
+ 882          
+ 883          /*****************************************************************************
+ 884           ** \brief  TMR2_AllIntEnable
+ 885           **     使能定时器2总中断
+ 886           ** \param [in] none
+ 887           ** \return   none
+ 888           ** \note   
+ 889           *****************************************************************************/
+ 890          void TMR2_AllIntEnable(void)
+ 891          {
+ 892   1        ET2 = 1;
+ 893   1      }
+ 894          
+ 895          /*****************************************************************************
+ 896           ** \brief  TMR2_AllIntDisable
+ 897           **     关闭定时器2总中断
+ 898           ** \param [in] none
+ 899           ** \return   none
+ 900           ** \note   
+ 901           *****************************************************************************/
+ 902          void TMR2_AllIntDisable(void)
+ 903          {
+ 904   1        ET2 = 0;
+ 905   1      }
+ 906          /*****************************************************************************
+ 907           ** \brief  TMR2_Start
+ 908           **     开启定时器2
+ 909           ** \param [in] none
+ 910           ** \return  none
+ 911           ** \note   
+ 912           *****************************************************************************/
+ 913          void TMR2_Start(void)
+ 914          {
+ 915   1        if(0x0 == (T2CON & TMR_T2CON_T2In_Msk))
+ 916   1        {
+ 917   2          T2CON |= (0x1 <<TMR_T2CON_T2In_Pos);  
+ 918   2        }
+ 919   1      }
+ 920          /*****************************************************************************
+ 921           ** \brief  TMR2_Stop
+C51 COMPILER V9.59.0.0   TIMER                                                             06/27/2023 19:17:31 PAGE 16  
+
+ 922           **     关闭定时器2
+ 923           ** \param [in] none
+ 924           ** \return  none
+ 925           ** \note   
+ 926           *****************************************************************************/
+ 927          void TMR2_Stop(void)
+ 928          {
+ 929   1        T2CON &= ~(TMR_T2CON_T2In_Msk);
+ 930   1      }
+ 931          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1074    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
